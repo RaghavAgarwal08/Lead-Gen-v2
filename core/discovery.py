@@ -6,7 +6,7 @@ from openai import OpenAI
 from apify_client import ApifyClient
 import config
 
-def discover_companies(query_topic: str, limit: int = 10) -> List[Dict]:
+def discover_companies(query_topic: str, limit: int = 10, log_cb=print) -> List[Dict]:
     """
     Primary interface for discovering target companies.
     1. Loads the profile of target companies from the new prospect list.
@@ -14,13 +14,13 @@ def discover_companies(query_topic: str, limit: int = 10) -> List[Dict]:
     3. Scrapes Product Hunt & Y Combinator via Apify to find fresh target companies.
     4. Filters out any companies that already exist in the prospect list or learned leads.
     """
-    print("[SEARCH] Analyzing ICP profile to generate search queries...")
+    log_cb("[SEARCH] Analyzing ICP profile to generate search queries...")
     queries = generate_search_queries_from_profile()
-    print(f"[SEARCH] Generated queries: {queries}")
+    log_cb(f"[SEARCH] Generated queries: {queries}")
     
     if not config.APIFY_API_TOKEN:
-        print("[WARNING] APIFY_API_TOKEN is missing. Returning fallback leads.")
-        return get_fallback_leads(limit=limit)
+        log_cb("[WARNING] APIFY_API_TOKEN is missing. Activating fail-safe OpenAI brainstorming fallback...")
+        return get_fallback_leads(limit=limit, log_cb=log_cb)
         
     client = ApifyClient(config.APIFY_API_TOKEN)
     
@@ -43,13 +43,13 @@ def discover_companies(query_topic: str, limit: int = 10) -> List[Dict]:
       "customDataFunction": "({ page, request, body }) => { return { }; }"
     }
     
-    print("[SEARCH] Scraping Product Hunt and Y Combinator via Apify...")
+    log_cb("[SEARCH] Scraping Product Hunt and Y Combinator via Apify...")
     try:
         run = client.actor("apify/google-search-scraper").call(run_input=run_input)
         dataset_items = client.dataset(run.default_dataset_id).list_items().items
     except Exception as e:
-        print(f"[WARNING] Apify discovery scraper failed: {e}. Using fallbacks.")
-        return get_fallback_leads(limit=limit)
+        log_cb(f"[WARNING] Apify discovery search failed: {e} (Account limits may be reached). Activating fail-safe OpenAI brainstorming fallback...")
+        return get_fallback_leads(limit=limit, log_cb=log_cb)
         
     discovered_companies = []
     seen_names = set()
@@ -118,8 +118,8 @@ def discover_companies(query_topic: str, limit: int = 10) -> List[Dict]:
             break
             
     if not discovered_companies:
-        print("[WARNING] No new leads found. Returning fallbacks.")
-        return get_fallback_leads(limit=limit)
+        log_cb("[WARNING] No net-new target leads found by scraper. Activating fail-safe OpenAI brainstorming fallback...")
+        return get_fallback_leads(limit=limit, log_cb=log_cb)
         
     return discovered_companies
 
@@ -295,12 +295,12 @@ def load_prospects_from_list(limit: int = 10) -> List[Dict]:
         
     return prospects[:limit]
 
-def get_fallback_leads(limit: int = 3) -> List[Dict]:
+def get_fallback_leads(limit: int = 3, log_cb=print) -> List[Dict]:
     """
     Fallback mechanism that uses OpenAI to brainstorm fresh, qualified tech startups
     matching the ICP, avoiding any already processed or existing ones.
     """
-    print("[FALLBACK] Apify discovery failed or returned empty. Using OpenAI to brainstorm fresh startup leads...")
+    log_cb("[FALLBACK] Apify discovery failed or returned empty. Using OpenAI to brainstorm fresh startup leads...")
     
     existing_names = get_existing_profile_company_names()
     learned_names = get_learned_company_names()
@@ -365,10 +365,10 @@ def get_fallback_leads(limit: int = 3) -> List[Dict]:
                 })
                 
         if valid_companies:
-            print(f"[FALLBACK] Brainstormed {len(valid_companies)} fresh leads via OpenAI fallback.")
+            log_cb(f"[FALLBACK] Brainstormed {len(valid_companies)} fresh leads via OpenAI fallback.")
             return valid_companies[:limit]
     except Exception as e:
-        print(f"[WARNING] OpenAI fallback brainstorming failed: {e}")
+        log_cb(f"[WARNING] OpenAI fallback brainstorming failed: {e}")
         
     # Final backup using curated premium backups
     valid_backups = [b for b in premium_backups if b["company_name"].lower() not in all_seen]

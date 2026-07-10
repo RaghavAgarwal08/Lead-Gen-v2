@@ -94,7 +94,7 @@ def run_bg_pipeline(limit: int, email: str):
             manager.current_step = "Discovering target companies..."
             manager.progress = 10
         manager.log("Analyzing ICP profile and generating search queries via OpenAI...")
-        companies = discover_companies("", limit=limit)
+        companies = discover_companies("", limit=limit, log_cb=manager.log)
         # Apply professional pre-qualification GPT filter
         companies = pre_qualify_companies_with_gpt(companies)
         manager.log(f"Found {len(companies)} qualified target prospects to process after pre-filtering.")

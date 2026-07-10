@@ -81,7 +81,7 @@ def run_pipeline(recipient_email: str, limit: int):
     print("--------------------------------------------------")
     
     # Step 1: Discover target companies directly from the ICP Prospect list
-    companies = discover_companies("", limit=limit)
+    companies = discover_companies("", limit=limit, log_cb=print)
     # Apply professional pre-qualification GPT filter
     companies = pre_qualify_companies_with_gpt(companies)
     print(f"Found {len(companies)} qualified target prospects to process after pre-filtering.")
