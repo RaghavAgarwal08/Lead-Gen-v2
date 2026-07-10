@@ -102,10 +102,11 @@ def run_pipeline(recipient_email: str, limit: int):
                 if not twitter_handle or twitter_handle.lower() == "not listed":
                     twitter_handle = search_twitter_handle(name)
                 if twitter_handle:
-                    recent_tweets = scrape_recent_tweets(twitter_handle, limit=5)
+                    recent_tweets = scrape_recent_tweets(twitter_handle, limit=5, company_name=name, tagline=cached_lead.get("tagline"))
                     cached_lead["recent_tweets"] = recent_tweets
                     cached_lead["twitter"] = f"https://x.com/{twitter_handle}"
                     save_lead_to_memory(cached_lead)
+
             
             print(f"[MEMORY] Loaded learned lead details for {name} from cache.")
             if "recent_tweets" not in cached_lead:
@@ -136,8 +137,9 @@ def run_pipeline(recipient_email: str, limit: int):
                 
             recent_tweets = []
             if twitter_handle:
-                recent_tweets = scrape_recent_tweets(twitter_handle, limit=5)
+                recent_tweets = scrape_recent_tweets(twitter_handle, limit=5, company_name=name, tagline=tagline)
                 contact_details["twitter"] = f"https://x.com/{twitter_handle}"
+
             
             # 2.4 Retrieve headquarters/country search snippets
             country_snippets = fetch_country(name)

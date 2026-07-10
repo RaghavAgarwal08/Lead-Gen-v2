@@ -151,6 +151,39 @@
                         </div>
                     </div>
 
+                    <!-- Live Stats Dashboard Metrics Card -->
+                    <div class="card mt-xl p-xl" id="analytics-card">
+                        <h2 class="card-title">Performance & Prediction Insights</h2>
+                        <p class="card-desc">Real-time execution speed and estimated outreach conversion metrics for this pipeline run:</p>
+                        
+                        <div class="stats-grid mt-md">
+                            <div class="stat-card-small">
+                                <div class="stat-icon">⏱️</div>
+                                <div class="stat-info">
+                                    <div class="stat-label">Total Execution Time</div>
+                                    <div class="stat-value" id="runtime-val">00m 00s</div>
+                                </div>
+                            </div>
+                            <div class="stat-card-small">
+                                <div class="stat-icon">⚡</div>
+                                <div class="stat-info">
+                                    <div class="stat-label">Lead Generation Speed</div>
+                                    <div class="stat-value" id="gen-rate-val">0.0 leads/min</div>
+                                </div>
+                            </div>
+                            <div class="stat-card-small">
+                                <div class="stat-icon">🎯</div>
+                                <div class="stat-info">
+                                    <div class="stat-label">Est. Campaign Reply Rate</div>
+                                    <div class="stat-value" id="reply-rate-val">0.0%</div>
+                                    <div class="progress-bar-bg mini mt-xs">
+                                        <div class="progress-bar-fill" id="reply-rate-bar" style="width: 0%; background-color: var(--success);"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Pipeline Live Log Console -->
                     <div class="card mt-xl log-console-card">
                         <div class="console-header">
@@ -270,6 +303,16 @@
                         <div class="settings-info-box mt-xl">
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
                             <p>To update credentials, modify the <code>.env</code> file directly in your workspace directory and restart the web server.</p>
+                        </div>
+                    </div>
+
+                    <!-- API Quotas & Usage Card -->
+                    <div class="card p-xl max-w-2xl mt-xl" id="api-usage-card">
+                        <h2 class="card-title">API Quotas & Usage</h2>
+                        <p class="card-desc">Remaining usage limits and credits for your active API accounts:</p>
+                        
+                        <div class="usage-status-list mt-md" id="usage-list">
+                            <div class="usage-loading">Fetching current API usage limits...</div>
                         </div>
                     </div>
                 </section>

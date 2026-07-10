@@ -18,6 +18,43 @@ def scrape_website_content(url: str) -> str:
         print(f"[WARNING] Firecrawl failed: {e}. Falling back to metadata search...")
         return f"Could not fetch full site. URL: {url}"
 
+def parse_firmographics_with_gpt(company_name: str, snippets: str) -> dict:
+    """Uses OpenAI to accurately extract funding and employee details from search results."""
+    if not config.OPENAI_API_KEY:
+        return None
+        
+    from openai import OpenAI
+    try:
+        client = OpenAI(api_key=config.OPENAI_API_KEY)
+        prompt = (
+            f"You are a sales intelligence extractor. Extract the total funding raised, last funding round details, "
+            f"and employee count for the company '{company_name}' based on the following Google search snippets:\n\n"
+            f"{snippets}\n\n"
+            "Provide the response strictly as a JSON object with the following keys:\n"
+            "- 'funding': a clean string describing total funding raised and stage (e.g. '$15M Series A', 'Seed - $2M', 'Bootstrapped', 'YC-backed - $500K'). "
+            "Be as specific as possible. If the funding is not mentioned, write 'Seed - Unknown' or 'Bootstrapped'.\n"
+            "- 'employees': employee size range (e.g. '11-50 employees', '51-200 employees').\n"
+            "Return ONLY the raw JSON block without markdown formatting."
+        )
+        completion = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.0
+        )
+        res_text = completion.choices[0].message.content.strip()
+        if res_text.startswith("```"):
+            res_text = res_text.split("```")[1]
+            if res_text.startswith("json"):
+                res_text = res_text[4:]
+            res_text = res_text.split("```")[0].strip()
+        
+        return json.loads(res_text)
+    except Exception as e:
+        print(f"[WARNING] AI firmographics extraction failed: {e}")
+        return None
+
 def fetch_firmographics(company_name: str) -> dict:
     """Queries Google via Apify to retrieve funding and employee size context."""
     print(f"[FIRMOGRAPHICS] Retrieving funding and company size context for {company_name}...")
@@ -48,26 +85,35 @@ def fetch_firmographics(company_name: str) -> dict:
             
     combined_snippets = " ".join(snippets)
     
-    # Simple heuristics to parse funding
-    funding = "Unknown / Seed"
-    if "raised" in combined_snippets.lower() or "funding" in combined_snippets.lower():
-        # Match dollar values e.g. $130k, $2.3B, $100M
-        matches = re_find_funding(combined_snippets)
-        if matches:
-            funding = f"Raised {', '.join(matches)}"
-            
-    # Simple heuristics to parse employee count
-    employees = "10-50 employees"
-    if "employees" in combined_snippets or "people" in combined_snippets:
-        emp_match = re_find_employees(combined_snippets)
-        if emp_match:
-            employees = emp_match
+    # Try GPT extraction first
+    gpt_firm = None
+    if config.OPENAI_API_KEY:
+        gpt_firm = parse_firmographics_with_gpt(company_name, combined_snippets)
+        
+    if gpt_firm:
+        funding = gpt_firm.get("funding", "Unknown / Seed")
+        employees = gpt_firm.get("employees", "10-50 employees")
+    else:
+        # Simple heuristics fallback to parse funding
+        funding = "Unknown / Seed"
+        if "raised" in combined_snippets.lower() or "funding" in combined_snippets.lower():
+            matches = re_find_funding(combined_snippets)
+            if matches:
+                funding = f"Raised {', '.join(matches)}"
+                
+        # Simple heuristics fallback to parse employee count
+        employees = "10-50 employees"
+        if "employees" in combined_snippets or "people" in combined_snippets:
+            emp_match = re_find_employees(combined_snippets)
+            if emp_match:
+                employees = emp_match
             
     return {
         "funding": funding,
         "employees": employees,
         "search_snippets": combined_snippets
     }
+
 
 def fetch_country(company_name: str) -> str:
     """Queries Google via Apify to retrieve headquarters/country context for the company."""

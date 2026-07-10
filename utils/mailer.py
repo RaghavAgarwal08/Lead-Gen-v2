@@ -43,12 +43,32 @@ def send_leads_report(recipient_email: str, docx_path: str, csv_path: str, num_l
             print(f"[WARNING] Attachment not found: {filepath}")
                 
     try:
-        server = smtplib.SMTP(config.SMTP_HOST, config.SMTP_PORT)
-        server.starttls()
+        if config.SMTP_PORT == 465:
+            print("[EMAIL] Connecting via SMTP_SSL (port 465)...")
+            server = smtplib.SMTP_SSL(config.SMTP_HOST, config.SMTP_PORT, timeout=15)
+        else:
+            print(f"[EMAIL] Connecting via SMTP (port {config.SMTP_PORT})...")
+            server = smtplib.SMTP(config.SMTP_HOST, config.SMTP_PORT, timeout=15)
+            server.starttls()
+            
         server.login(config.SMTP_USER, config.SMTP_PASSWORD)
         server.sendmail(config.SMTP_USER, recipient_email, msg.as_string())
         server.quit()
         print(f"[OK] Successfully sent report email to {recipient_email}!")
     except Exception as e:
-        print(f"[FAIL] Failed to send email via SMTP: {e}")
-        raise
+        print(f"[EMAIL] SMTP connection/sending failed on port {config.SMTP_PORT}: {e}")
+        # Fallback to port 465 if we attempted port 587 or others
+        if config.SMTP_PORT != 465:
+            print("[EMAIL] Attempting fallback to port 465 via SMTP_SSL...")
+            try:
+                server = smtplib.SMTP_SSL(config.SMTP_HOST, 465, timeout=15)
+                server.login(config.SMTP_USER, config.SMTP_PASSWORD)
+                server.sendmail(config.SMTP_USER, recipient_email, msg.as_string())
+                server.quit()
+                print(f"[OK] Successfully sent report email to {recipient_email} via fallback port 465!")
+                return
+            except Exception as fallback_err:
+                print(f"[FAIL] Fallback to port 465 also failed: {fallback_err}")
+                raise fallback_err
+        raise e
+

@@ -42,6 +42,9 @@ class PipelineManager:
         self.limit = 0
         self.email = ""
         self.lock = threading.RLock()
+        self.start_time = None
+        self.end_time = None
+
 
     def log(self, message: str):
         timestamp = time.strftime('%H:%M:%S')
@@ -73,6 +76,9 @@ def run_bg_pipeline(limit: int, email: str):
         manager.progress = 5
         manager.limit = limit
         manager.email = email
+        manager.start_time = time.time()
+        manager.end_time = None
+
         
     manager.log("==================================================")
     manager.log("  TIMIDLY INC - LEAD GENERATION PIPELINE START   ")
@@ -124,7 +130,7 @@ def run_bg_pipeline(limit: int, email: str):
                     if not twitter_handle or twitter_handle.lower() == "not listed":
                         twitter_handle = search_twitter_handle(name)
                     if twitter_handle:
-                        recent_tweets = scrape_recent_tweets(twitter_handle, limit=5)
+                        recent_tweets = scrape_recent_tweets(twitter_handle, limit=5, company_name=name, tagline=cached_lead.get("tagline"))
                         cached_lead["recent_tweets"] = recent_tweets
                         cached_lead["twitter"] = f"https://x.com/{twitter_handle}"
                         save_lead_to_memory(cached_lead)
@@ -165,7 +171,8 @@ def run_bg_pipeline(limit: int, email: str):
                 recent_tweets = []
                 if twitter_handle:
                     manager.log(f"[{name}] Twitter handle discovered: @{twitter_handle}. Fetching recent tweets using apidojo/tweet-scraper...")
-                    recent_tweets = scrape_recent_tweets(twitter_handle, limit=5)
+                    recent_tweets = scrape_recent_tweets(twitter_handle, limit=5, company_name=name, tagline=tagline)
+
                     contact_details["twitter"] = f"https://x.com/{twitter_handle}"
                 else:
                     manager.log(f"[{name}] No Twitter handle found.")
@@ -270,12 +277,15 @@ def run_bg_pipeline(limit: int, email: str):
             manager.progress = 100
             manager.is_running = False
             manager.current_step = "Completed"
+            manager.end_time = time.time()
             
     except Exception as e:
         manager.log(f"[CRITICAL ERROR] Pipeline crashed: {e}")
         with manager.lock:
             manager.error = str(e)
             manager.is_running = False
+            manager.end_time = time.time()
+
 
 class StartPipelineRequest(BaseModel):
     limit: int
@@ -297,14 +307,27 @@ def start_generation(req: StartPipelineRequest, background_tasks: BackgroundTask
 def get_status():
     global manager
     with manager.lock:
+        elapsed = 0
+        if manager.is_running and manager.start_time:
+            elapsed = time.time() - manager.start_time
+        elif manager.start_time and manager.end_time:
+            elapsed = manager.end_time - manager.start_time
+            
+        lead_scores = [lead.get("lead_score", 8) for lead in manager.leads if "lead_score" in lead]
+        
         return {
             "is_running": manager.is_running,
             "current_step": manager.current_step,
             "progress": manager.progress,
             "error": manager.error,
             "logs": list(manager.logs), # copy list
-            "leads_count": len(manager.leads)
+            "leads_count": len(manager.leads),
+            "elapsed_seconds": elapsed,
+            "start_time": manager.start_time,
+            "end_time": manager.end_time,
+            "lead_scores": lead_scores
         }
+
 
 @app.get("/api/leads")
 def get_leads():
@@ -368,6 +391,85 @@ def get_config_status():
         "firecrawl": bool(config.FIRECRAWL_API_KEY),
         "smtp": bool(config.SMTP_USER and config.SMTP_PASSWORD)
     }
+
+@app.get("/api/usage")
+def get_api_usage():
+    import requests
+    
+    # 1. Apify Usage
+    apify_usage = {"status": "Unknown"}
+    if config.APIFY_API_TOKEN:
+        try:
+            r = requests.get(f"https://api.apify.com/v2/users/me?token={config.APIFY_API_TOKEN}", timeout=8)
+            if r.status_code == 200:
+                data = r.json().get("data", {})
+                sub = data.get("subscription", {})
+                username = data.get("username", "user")
+                limit_usd = sub.get("currentBillingPeriodLimitUsd", 5.0)
+                usage_usd = sub.get("currentBillingPeriodUsageUsd", 0.0)
+                apify_usage = {
+                    "status": "Success",
+                    "username": username,
+                    "limit_usd": limit_usd,
+                    "usage_usd": usage_usd,
+                    "remaining_usd": max(0.0, limit_usd - usage_usd)
+                }
+            else:
+                apify_usage = {"status": "Error", "message": f"API returned status {r.status_code}"}
+        except Exception as e:
+            apify_usage = {"status": "Error", "message": str(e)}
+
+    # 2. Firecrawl Usage
+    firecrawl_usage = {"status": "Unknown"}
+    if config.FIRECRAWL_API_KEY:
+        try:
+            headers = {"Authorization": f"Bearer {config.FIRECRAWL_API_KEY}"}
+            r = requests.get("https://api.firecrawl.dev/v2/team/credit-usage", headers=headers, timeout=8)
+            if r.status_code == 200:
+                data = r.json()
+                total = data.get("credits") or data.get("totalCredits") or data.get("total_credits", 500)
+                remaining = data.get("remainingCredits") or data.get("remaining_credits") or data.get("remaining", 0)
+                used = data.get("usedCredits") or data.get("used_credits") or (total - remaining if total else 0)
+                firecrawl_usage = {
+                    "status": "Success",
+                    "total_credits": total,
+                    "remaining_credits": remaining,
+                    "used_credits": used
+                }
+            else:
+                firecrawl_usage = {"status": "Error", "message": f"API returned status {r.status_code}"}
+        except Exception as e:
+            firecrawl_usage = {"status": "Error", "message": str(e)}
+
+    # 3. OpenAI Usage
+    openai_usage = {"status": "Unknown"}
+    if config.OPENAI_API_KEY:
+        try:
+            headers = {"Authorization": f"Bearer {config.OPENAI_API_KEY}"}
+            r = requests.get("https://api.openai.com/v1/models", headers=headers, timeout=8)
+            if r.status_code == 200:
+                costs_req = requests.get("https://api.openai.com/v1/organization/costs", headers=headers, timeout=5)
+                if costs_req.status_code == 200:
+                    openai_usage = {
+                        "status": "Success",
+                        "details": costs_req.json()
+                    }
+                else:
+                    openai_usage = {
+                        "status": "Active",
+                        "message": "API key is active. Spend and usage limits can be checked in platform.openai.com settings."
+                    }
+            else:
+                openai_usage = {"status": "Error", "message": f"Invalid key or error: HTTP {r.status_code}"}
+        except Exception as e:
+            openai_usage = {"status": "Error", "message": str(e)}
+
+    return {
+        "apify": apify_usage,
+        "firecrawl": firecrawl_usage,
+        "openai": openai_usage
+    }
+
 
 @app.get("/api/download/docx")
 def download_docx():

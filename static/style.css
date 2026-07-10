@@ -1140,3 +1140,108 @@ a {
         padding: 1.5rem;
     }
 }
+
+/* Stats Metrics Card Styling */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1.5rem;
+}
+.stat-card-small {
+    background-color: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    transition: var(--transition);
+}
+.stat-card-small:hover {
+    border-color: var(--primary);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 106, 78, 0.05);
+}
+.stat-icon {
+    font-size: 1.75rem;
+    background-color: var(--bg-secondary);
+    border-radius: 10px;
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--border-color);
+}
+.stat-info {
+    flex-grow: 1;
+}
+.stat-label {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 600;
+}
+.stat-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-top: 0.25rem;
+    font-family: var(--font-mono);
+}
+.progress-bar-bg.mini {
+    height: 6px;
+    border-radius: 3px;
+    margin-top: 0.5rem;
+}
+
+/* API Usage limits card styling */
+.usage-status-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+.usage-status-item {
+    background-color: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    transition: var(--transition);
+}
+.usage-status-item:hover {
+    border-color: var(--border-hover);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+}
+.usage-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.usage-title {
+    font-weight: 600;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+.usage-value-text {
+    font-size: 0.85rem;
+    font-family: var(--font-mono);
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+.usage-info {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+.usage-loading {
+    padding: 2rem;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
