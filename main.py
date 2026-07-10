@@ -7,7 +7,7 @@ from datetime import datetime
 # Add current folder to path
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
-from core.discovery import discover_companies
+from core.discovery import discover_companies, pre_qualify_companies_with_gpt
 from core.contacts import find_contact_person, extract_contact_info
 from core.enricher import scrape_website_content, fetch_firmographics, fetch_country
 from core.generator import generate_personalized_pitch
@@ -82,7 +82,9 @@ def run_pipeline(recipient_email: str, limit: int):
     
     # Step 1: Discover target companies directly from the ICP Prospect list
     companies = discover_companies("", limit=limit)
-    print(f"Found {len(companies)} target prospects to process.")
+    # Apply professional pre-qualification GPT filter
+    companies = pre_qualify_companies_with_gpt(companies)
+    print(f"Found {len(companies)} qualified target prospects to process after pre-filtering.")
     
     final_leads = []
     
@@ -94,6 +96,10 @@ def run_pipeline(recipient_email: str, limit: int):
         # Check Self-Learning Memory Cache
         cached_lead = get_lead_from_memory(name)
         if cached_lead:
+            if cached_lead.get("lead_score", 0) < 7:
+                print(f"[MEMORY] Skipping cached lead {name} as its score ({cached_lead.get('lead_score')}/10) is below the qualification threshold.")
+                continue
+                
             # If cached lead doesn't have recent tweets, let's fetch them now!
             if not cached_lead.get("recent_tweets"):
                 print(f"[MEMORY] Cache hit for {name} but no recent tweets found. Fetching tweets...")
@@ -157,6 +163,11 @@ def run_pipeline(recipient_email: str, limit: int):
                 contact_info=contact,
                 recent_tweets=recent_tweets
             )
+            
+            # Check strict professional qualification score threshold
+            if ai_pitch.lead_score < 7:
+                print(f"[DISCARDED] {name} failed professional fit score threshold (Score: {ai_pitch.lead_score}/10). Skipping...")
+                continue
             
             # Compile the complete lead record using all enriched API data
             lead_record = {

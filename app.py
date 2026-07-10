@@ -17,7 +17,7 @@ import config
 from main import get_lead_from_memory, save_lead_to_memory, MEMORY_FILE, IS_VERCEL
 
 BASE_DIR = "/tmp" if IS_VERCEL else os.path.dirname(os.path.abspath(__file__))
-from core.discovery import discover_companies
+from core.discovery import discover_companies, pre_qualify_companies_with_gpt
 from core.contacts import find_contact_person, extract_contact_info
 from core.enricher import scrape_website_content, fetch_firmographics, fetch_country
 from core.generator import generate_personalized_pitch
@@ -95,7 +95,9 @@ def run_bg_pipeline(limit: int, email: str):
             manager.progress = 10
         manager.log("Analyzing ICP profile and generating search queries via OpenAI...")
         companies = discover_companies("", limit=limit)
-        manager.log(f"Found {len(companies)} target prospects to process.")
+        # Apply professional pre-qualification GPT filter
+        companies = pre_qualify_companies_with_gpt(companies)
+        manager.log(f"Found {len(companies)} qualified target prospects to process after pre-filtering.")
         
         final_leads = []
         total = len(companies)
@@ -122,6 +124,12 @@ def run_bg_pipeline(limit: int, email: str):
             # Check memory cache
             cached_lead = get_lead_from_memory(name)
             if cached_lead:
+                if cached_lead.get("lead_score", 0) < 7:
+                    manager.log(f"[MEMORY] Skipping cached lead {name} as its score ({cached_lead.get('lead_score')}/10) is below the qualification threshold.")
+                    with manager.lock:
+                        manager.progress = int(10 + (idx / total) * 70)
+                    continue
+                    
                 # If cached lead doesn't have recent tweets, let's fetch them now!
                 if not cached_lead.get("recent_tweets"):
                     manager.log(f"[MEMORY] Cache hit for {name} but no recent tweets found. Fetching tweets...")
@@ -196,6 +204,13 @@ def run_bg_pipeline(limit: int, email: str):
                     contact_info=contact,
                     recent_tweets=recent_tweets
                 )
+                
+                # Check strict professional qualification score threshold
+                if ai_pitch.lead_score < 7:
+                    manager.log(f"[DISCARDED] {name} failed professional fit score threshold (Score: {ai_pitch.lead_score}/10). Skipping...")
+                    with manager.lock:
+                        manager.progress = int(10 + (idx / total) * 70)
+                    continue
                 
                 lead_record = {
                     "company_name": name,

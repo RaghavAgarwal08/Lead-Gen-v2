@@ -20,12 +20,25 @@ class PitchAnalysis(BaseModel):
     background_of_founders: str = Field(
         description="Detailed background context about the founders/point of contact, including their work experience, education, or achievements."
     )
+    audience_alignment_score: int = Field(
+        description="Score from 1 to 10: How well their target audience aligns with developers, engineers, and technical builders."
+    )
+    budget_maturity_score: int = Field(
+        description="Score from 1 to 10: Estimate of their marketing budget based on company size and funding stage."
+    )
+    product_relevance_score: int = Field(
+        description="Score from 1 to 10: Product vertical fit (AI infra, dev tools, open-source, databases score highest)."
+    )
+    traction_signals_score: int = Field(
+        description="Score from 1 to 10: Growth and presence signals (recent tweets, updates, launches)."
+    )
     lead_score: int = Field(
-        description="Lead fit score out of 10 (integer from 1 to 10) evaluating how well this company aligns with Timidly Inc's Ideal Customer Profile (ICP). Higher is better. Based on the fact that Timidly Inc targets high-growth tech startups in AI, developer tools, database, GTM, and SaaS space who sell to builders, developers, or founders."
+        description="Overall weighted lead qualification score from 1 to 10. Should match the calculated value: round(0.4 * audience + 0.3 * budget + 0.2 * product + 0.1 * traction)."
     )
     score_justification: str = Field(
-        description="A short 1-2 sentence justification for the lead score out of 10."
+        description="A short 1-2 sentence justification explaining the score across each of the 4 dimensions."
     )
+
 
 def generate_personalized_pitch(
     company_name: str,
@@ -86,14 +99,16 @@ def generate_personalized_pitch(
         "Your task is to analyze the target startup company details, their landing page, their funding/firmographics stage, "
         "their point of contact, and their recent tweets to write a highly tailored pitch recommendation and evaluate their "
         "lead score out of 10.\n\n"
-        "Lead Scoring Criteria (out of 10):\n"
-        "- 9-10: Perfect fit. High-growth tech startup in developer tooling, databases, open-source tech, or AI, selling directly to builders/developers, with active funding (Series A-D or YC-backed).\n"
-        "- 7-8: Great fit. Mid-stage tech/AI startup, selling to general startup operators/founders, or possessing good organic traction.\n"
-        "- 5-6: Moderate fit. B2B SaaS without developer angle or lower relevance to software engineering builders.\n"
-        "- 1-4: Poor fit. Non-tech company, consultancy, localized business, or extremely early bootstrapped with no budget.\n\n"
+        "Professional Lead Scoring Criteria (decomposed dimensions, each scored 1-10):\n"
+        "1. Audience Alignment Score (1-10): How well does their target customer base align with software engineers, developer managers, data scientists, or technical founders? (10 = sells directly to developers, 1 = sells to non-tech retail consumers).\n"
+        "2. Budget Maturity Score (1-10): Does the startup have the capital to afford Timidly's premium packages ($199 to $1,500)? (10 = Series A-D/Enterprise, 7-8 = Seed or YC-backed, 4-6 = Bootstrapped SaaS, 1-3 = Pre-revenue/micro-project).\n"
+        "3. Product Relevance Score (1-10): Is the product vertical a core focus for Timidly? (10 = AI infra, databases, dev tools, open-source, 7-8 = general technical B2B SaaS, 4-6 = general B2B SaaS, 1-3 = non-tech or services).\n"
+        "4. Traction & Growth Signals (1-10): Active presence on X/Twitter, recent releases, hiring signals, or positive media coverage.\n\n"
+        "Calculate the final `lead_score` as the weighted round of: (0.4 * audience_alignment + 0.3 * budget_maturity + 0.2 * product_relevance + 0.1 * traction_signals).\n\n"
         f"Available Sponsorship Packages:\n{available_packages_str}"
         f"{learned_examples_str}"
     )
+
     
     recent_tweets_str = ""
     if recent_tweets:

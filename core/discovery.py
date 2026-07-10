@@ -309,3 +309,55 @@ def get_fallback_leads() -> List[Dict]:
             "website": "https://llamaindex.ai"
         }
     ]
+
+def pre_qualify_companies_with_gpt(companies: List[Dict]) -> List[Dict]:
+    """
+    Performs a lightweight GPT-4o-mini pre-filter based on names and taglines.
+    Removes obvious consultancies, e-commerce stores, local shops, design agencies,
+    or low-tech B2C applications to ensure high-quality pipeline candidates.
+    """
+    if not config.OPENAI_API_KEY or not companies:
+        return companies
+        
+    print(f"[PRE-QUALIFY] Submitting {len(companies)} candidates for pre-qualification filtering...")
+    
+    candidates_list = []
+    for idx, c in enumerate(companies):
+        candidates_list.append({
+            "index": idx,
+            "company_name": c["company_name"],
+            "tagline": c.get("tagline", "")
+        })
+        
+    system_prompt = (
+        "You are a professional SalesOps intelligence parser. Your job is to pre-qualify and filter out unqualified companies.\n\n"
+        "Timidly Inc targets high-growth tech startups in developer tooling, databases, open-source tech, AI infra, and advanced technical B2B SaaS.\n\n"
+        "Discard any companies that are:\n"
+        "- Consultancies or software agencies (offering 'services', 'custom building', 'outsourcing').\n"
+        "- Local businesses (e.g. gym, dentist, local restaurant, real estate broker).\n"
+        "- Retail e-commerce brands or direct-to-consumer physical items.\n"
+        "- General low-tech apps (like a localized calculator or simple fitness tracker).\n\n"
+        "Return ONLY a JSON object with key 'qualified_indices' containing a list of integers of the qualified company indexes, e.g. {\"qualified_indices\": [0, 2]}."
+    )
+    
+    user_prompt = f"Candidates to filter:\n{json.dumps(candidates_list, indent=2)}"
+    
+    try:
+        client = OpenAI(api_key=config.OPENAI_API_KEY)
+        completion = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt}
+            ],
+            response_format={"type": "json_object"}
+        )
+        data = json.loads(completion.choices[0].message.content)
+        qualified_indices = data.get("qualified_indices", [])
+        
+        filtered = [companies[i] for i in qualified_indices if 0 <= i < len(companies)]
+        print(f"[PRE-QUALIFY] Pre-qualification complete. Kept {len(filtered)} out of {len(companies)} discovered companies.")
+        return filtered
+    except Exception as e:
+        print(f"[WARNING] Pre-qualification failed: {e}. Defaulting to keep all discovered companies.")
+        return companies
