@@ -1,0 +1,10 @@
+python-dotenv==1.0.1
+pydantic==2.13.4
+openai==2.44.0
+apify-client==3.0.4
+python-docx==1.1.2
+requests==2.32.3
+firecrawl-py==1.0.0
+fastapi
+uvicorn
+

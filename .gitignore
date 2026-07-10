@@ -1,0 +1,30 @@
+# Environment variables (API keys, passwords)
+.env
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+venv/
+.venv/
+
+# Generated reports
+output/
+Timidly_Prospects_Report.*
+
+# Self-learning memory database
+learned_leads.json
+
+# OS files
+.DS_Store
+Thumbs.db
+~$*
+
+# IDE
+.vscode/
+.idea/
+
+.vercel
