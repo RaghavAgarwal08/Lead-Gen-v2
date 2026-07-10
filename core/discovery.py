@@ -62,6 +62,17 @@ def discover_companies(query_topic: str, limit: int = 10) -> List[Dict]:
             url = res.get("url", "")
             
             # Clean up title to extract name
+            # Filter out YC/PH index, list, tag, category, location, and tag pages
+            # E.g. ycombinator.com/companies/industry/healthcare or posts/categories/tech
+            url_lower = url.lower()
+            if any(term in url_lower for term in [
+                "/companies/industry", "/companies/industries", "/companies/tags", 
+                "/companies/location", "/companies/regions", "/companies/founders",
+                "/posts/categories", "/posts/topics", "/posts/new"
+            ]):
+                continue
+
+            # Clean up title to extract name
             name = title.split("-")[0].split("|")[0].split("—")[0].strip()
             
             # If name is long or looks like a descriptive phrase, parse slug from URL
@@ -75,13 +86,18 @@ def discover_companies(query_topic: str, limit: int = 10) -> List[Dict]:
                 if parsed_slug:
                     name = parsed_slug.replace("-", " ").replace("_", " ").title()
                     
-            if not name or name.lower() in ["product hunt", "y combinator", "companies", "posts"]:
+            if not name or name.lower() in [
+                "product hunt", "y combinator", "companies", "posts", "industry", 
+                "industries", "tags", "blog", "about", "careers", "jobs", "team", 
+                "pricing", "contact", "categories", "topics"
+            ]:
                 continue
                 
             name_lower = name.lower()
             if name_lower in seen_names or name_lower in existing_names or name_lower in learned_names:
                 # Skip if already seen, in the profile list, or already learned
                 continue
+
                 
             seen_names.add(name_lower)
             
@@ -108,14 +124,35 @@ def discover_companies(query_topic: str, limit: int = 10) -> List[Dict]:
     return discovered_companies
 
 def generate_search_queries_from_profile() -> List[str]:
-    """Loads the profile companies and uses OpenAI to generate 3 search queries."""
-    prospects = load_prospects_from_list(15)
+    """Loads the profile companies, randomizes them, and uses OpenAI to generate 3 search queries."""
+    import random
+    
+    # Load all prospects (up to 100)
+    all_prospects = load_prospects_from_list(100)
+    
+    # Take a random sample of up to 15 prospects
+    if all_prospects:
+        sample_size = min(len(all_prospects), 15)
+        prospects = random.sample(all_prospects, sample_size)
+    else:
+        prospects = []
+        
     profile_str = "\n".join([f"- {p['company_name']}: {p['tagline']}" for p in prospects])
     
     if not config.OPENAI_API_KEY:
-        return ["AI GTM", "AI code editor", "AI agents developer tools"]
+        default_topics = ["AI GTM", "AI code editor", "AI agents developer tools", "DevOps orchestration", "AI sales agent"]
+        random.shuffle(default_topics)
+        return default_topics[:3]
         
     client = OpenAI(api_key=config.OPENAI_API_KEY)
+    
+    topics = [
+        "AI agents", "developer tools", "GTM automation", "DevOps", 
+        "LLM operations", "vector databases", "sales automation", 
+        "AI security", "infrastructure", "B2B SaaS", "low-code platforms"
+    ]
+    random.shuffle(topics)
+    selected_topics = ", ".join(topics[:3])
     
     system_prompt = (
         "You are an expert sales intelligence analyst. Your job is to analyze a profile of target companies (ICP) "
@@ -124,10 +161,11 @@ def generate_search_queries_from_profile() -> List[str]:
     )
     
     user_prompt = f"""
-    Here is the profile of target companies (ICP):
+    Here is a sample profile of target companies (ICP):
     {profile_str}
     
-    Generate 3 distinct search queries to find new, similar companies in the AI, developer tools, and GTM automation spaces.
+    Generate 3 distinct search queries to find new, similar companies focusing specifically on areas like: {selected_topics}.
+    Make queries simple and highly optimized for Google search.
     """
     
     try:
@@ -146,7 +184,10 @@ def generate_search_queries_from_profile() -> List[str]:
     except Exception as e:
         print(f"[WARNING] Failed to generate search queries via OpenAI: {e}")
         
-    return ["AI GTM", "AI code editor", "AI agents developer tools"]
+    default_topics = ["AI GTM", "AI code editor", "AI agents developer tools", "DevOps orchestration", "AI sales agent"]
+    random.shuffle(default_topics)
+    return default_topics[:3]
+
 
 def get_existing_profile_company_names() -> set:
     """Gets the set of company names in the original prospect list."""

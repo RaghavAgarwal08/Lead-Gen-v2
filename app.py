@@ -400,13 +400,22 @@ def get_api_usage():
     apify_usage = {"status": "Unknown"}
     if config.APIFY_API_TOKEN:
         try:
-            r = requests.get(f"https://api.apify.com/v2/users/me?token={config.APIFY_API_TOKEN}", timeout=8)
+            # Query limits endpoint for exact spend cycles and monthly usage
+            r = requests.get(f"https://api.apify.com/v2/users/me/limits?token={config.APIFY_API_TOKEN}", timeout=8)
             if r.status_code == 200:
-                data = r.json().get("data", {})
-                sub = data.get("subscription", {})
-                username = data.get("username", "user")
-                limit_usd = sub.get("currentBillingPeriodLimitUsd", 5.0)
-                usage_usd = sub.get("currentBillingPeriodUsageUsd", 0.0)
+                limits_data = r.json().get("data", {})
+                limits = limits_data.get("limits", {})
+                current = limits_data.get("current", {})
+                
+                limit_usd = float(limits.get("maxMonthlyUsageUsd", 5.0))
+                usage_usd = float(current.get("monthlyUsageUsd", 0.0))
+                
+                # Fetch username for display
+                username = "user"
+                r_me = requests.get(f"https://api.apify.com/v2/users/me?token={config.APIFY_API_TOKEN}", timeout=5)
+                if r_me.status_code == 200:
+                    username = r_me.json().get("data", {}).get("username", "user")
+                    
                 apify_usage = {
                     "status": "Success",
                     "username": username,
@@ -426,10 +435,14 @@ def get_api_usage():
             headers = {"Authorization": f"Bearer {config.FIRECRAWL_API_KEY}"}
             r = requests.get("https://api.firecrawl.dev/v2/team/credit-usage", headers=headers, timeout=8)
             if r.status_code == 200:
-                data = r.json()
-                total = data.get("credits") or data.get("totalCredits") or data.get("total_credits", 500)
-                remaining = data.get("remainingCredits") or data.get("remaining_credits") or data.get("remaining", 0)
-                used = data.get("usedCredits") or data.get("used_credits") or (total - remaining if total else 0)
+                # Firecrawl nests planCredits and remainingCredits inside "data" key
+                res_json = r.json()
+                credits_data = res_json.get("data", {})
+                
+                total = credits_data.get("planCredits") or credits_data.get("credits") or credits_data.get("totalCredits", 500)
+                remaining = credits_data.get("remainingCredits") or 0
+                used = max(0, total - remaining)
+                
                 firecrawl_usage = {
                     "status": "Success",
                     "total_credits": total,
