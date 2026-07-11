@@ -65,8 +65,8 @@ The pipeline automates this entire lifecycle. Within minutes, a single run disco
 ## 3. User Guide (Draft)
 
 ### Install or Access the Tool
-*   **Web Interface (Live Dashboard)**: Access the cloud dashboard at [https://lead-gen-v2-if0t931gi-raghav-agarwals-projects-306aac5f.vercel.app](https://lead-gen-v2-if0t931gi-raghav-agarwals-projects-306aac5f.vercel.app).
-*   **Local Setup (CLI & Server)**: If running locally, clone the git repository, run the server, and navigate to `http://localhost:8000` in your web browser.
+*   **Web Interface (Live Dashboard)**: Access your deployed cloud dashboard on Render (or your configured cloud provider).
+*   **Local Setup (CLI & Server)**: If running locally, clone the git repository, run the server, and navigate to `http://127.0.0.1:8000` in your web browser.
 
 ### Configure API Keys
 To run the pipeline, ensure the following keys are set in your environment (or inside the local `.env` file):
@@ -332,7 +332,7 @@ To ensure platform reliability, data integrity, and cost management, the followi
 | Risk Category | Risk Description | Business/Technical Impact | Mitigation Strategy |
 | :--- | :--- | :--- | :--- |
 | **Broken Access Control & Auth Failures** | Lacking login checks on dashboard UI and backend API routes. Anyone could trigger runs, download records, clear history, or view settings. | **High Impact**: Attackers can trigger repetitive discovery scripts, exhausting credit quotas of third-party APIs (OpenAI, Apify, Firecrawl, Resend) or read personal data of targets. | **Mitigation**: Configured `APP_PASSWORD` token validation. Backend requires `X-App-Password` header on all `/api/*` requests. Frontend automatically prompts a login modal and locks dashboard if unauthenticated. |
-| **Data Loss & Session Reset** | The platform stores deduplicated leads and self-learning history in a local file (`learned_leads.json`). In containerized, serverless, or ephemeral hosting environments (like Vercel or Render Free Tier), local disk storage is wiped on restarts/redeployments. | **High Impact**: History is lost, causing the pipeline to re-process and re-charge for duplicate leads, exhausting API credits. It also wipes out the few-shot learning context for the AI writer. | **Mitigation**: Transition from a local flat file to a persistent cloud database (e.g., Supabase PostgreSQL, MongoDB, or AWS DynamoDB) or attach a persistent block storage volume to the container. |
+| **Data Loss & Session Reset** | The platform stores deduplicated leads and self-learning history in a local file (`learned_leads.json`). In containerized, serverless, or ephemeral hosting environments (like Render Free Tier), local disk storage is wiped on restarts/redeployments. | **High Impact**: History is lost, causing the pipeline to re-process and re-charge for duplicate leads, exhausting API credits. It also wipes out the few-shot learning context for the AI writer. | **Mitigation**: Transition from a local flat file to a persistent cloud database (e.g., Supabase PostgreSQL, MongoDB, or AWS DynamoDB) or attach a persistent block storage volume to the container. |
 | **API Limit & Credit Exhaustion** | The pipeline synchronously consumes credits across four critical paid APIs: OpenAI, Apify, Firecrawl, and Resend. Large searches or concurrent queries can quickly hit rate/token limits or exhaust monthly free tiers. | **High Impact**: The lead generation process will crash mid-run, leading to partial reports and dashboard failures. | **Mitigation**: Implement real-time usage tracking in the admin dashboard, enforce maximum search boundaries (e.g., hard caps in UI), and implement graceful fallback logging for when API keys hit limit caps. |
 | **Anti-Scraping / IP Blocking** | Scrapers (for Product Hunt, Y Combinator, and target homepages) do not use proxy rotation on free plans. Target websites or Google Search may block crawler IPs, presenting CAPTCHAs or Cloudflare challenge walls. | **Medium to High**: Scrapers return empty results, causing the contact lookup, firmographics, and pitch generation modules to fail or output blank fields. | **Mitigation**: Integrate rotating residential proxies (e.g., via Apify Proxy or Firecrawl Proxy settings), randomize User-Agent headers, and use fallback web scraping methods when a block is detected. |
 | **Silent Email Delivery Failures** | Hosting providers block outbound SMTP traffic on ports 25 and 587 by default. If the Resend API (HTTPS port 443) fails or credentials expire, fallback SMTP dispatch will also fail on restricted clouds. | **Medium**: The user will not receive reports via email. Since it happens at the end of the script, it could be a silent failure where the run looks successful but reports never arrive. | **Mitigation**: Implement robust retry logic, treat the Resend HTTPS API as the primary channel, and display an explicit delivery warning/log status on the Web Admin Dashboard. |
@@ -350,3 +350,18 @@ To ensure platform reliability, data integrity, and cost management, the followi
 *   **Resend HTTP Integration**: Configured secure HTTPS email relay to bypass SMTP cloud port blockades.
 *   **Self-Learning Loop**: Integrated dynamic memory loading using the last 5 leads as few-shot context examples.
 *   **DOCX Brand Formatting**: Re-formatted Word doc output to match Calibri styles and navy color guidelines.
+
+---
+
+## Document Navigation
+
+*   [README.md](README.md) — Product Overview & Launch
+*   [DOCUMENTATION_V1.md](DOCUMENTATION_V1.md) — User & Admin Operations Guide
+*   [USAGE.md](USAGE.md) — Environment variables & CLI usage reference
+*   [ARCHITECTURE.md](ARCHITECTURE.md) — Project layout & Module maps
+*   [TECHNICAL_ARCHITECTURE.md](TECHNICAL_ARCHITECTURE.md) — Technical system design details
+*   [WORKFLOW.md](WORKFLOW.md) — Pipeline data processing stages
+*   [OWASP_TOP_10.md](OWASP_TOP_10.md) — Security remediations & Checklist
+*   [Operations-Runbook.md](Operations-Runbook.md) — Operations & Troubleshooting runbook
+*   [INTEGRATIONS_LIST.md](INTEGRATIONS_LIST.md) — API configurations & Cost structure
+*   [LEAD_QUALIFICATION_CRITERIA.md](LEAD_QUALIFICATION_CRITERIA.md) — Fit scoring framework & Criteria

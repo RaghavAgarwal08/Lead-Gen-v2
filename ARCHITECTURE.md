@@ -110,3 +110,18 @@ Using Pydantic models with OpenAI's `response_format` parameter guarantees that 
 
 ### Why a local JSON file for self-learning instead of a vector database?
 For a tool processing 5–50 leads per run, a flat JSON file is simpler, faster, and requires zero infrastructure. The last 5 leads are loaded as few-shot examples — well within GPT-4o-mini's context window — making a vector database unnecessary overhead at this scale.
+
+---
+
+## Document Navigation
+
+*   [README.md](README.md) — Product Overview & Launch
+*   [DOCUMENTATION_V1.md](DOCUMENTATION_V1.md) — User & Admin Operations Guide
+*   [USAGE.md](USAGE.md) — Environment variables & CLI usage reference
+*   [ARCHITECTURE.md](ARCHITECTURE.md) — Project layout & Module maps
+*   [TECHNICAL_ARCHITECTURE.md](TECHNICAL_ARCHITECTURE.md) — Technical system design details
+*   [WORKFLOW.md](WORKFLOW.md) — Pipeline data processing stages
+*   [OWASP_TOP_10.md](OWASP_TOP_10.md) — Security remediations & Checklist
+*   [Operations-Runbook.md](Operations-Runbook.md) — Operations & Troubleshooting runbook
+*   [INTEGRATIONS_LIST.md](INTEGRATIONS_LIST.md) — API configurations & Cost structure
+*   [LEAD_QUALIFICATION_CRITERIA.md](LEAD_QUALIFICATION_CRITERIA.md) — Fit scoring framework & Criteria

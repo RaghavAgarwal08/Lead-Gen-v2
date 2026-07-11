@@ -66,3 +66,18 @@ $$\text{Final Fit Score} = \text{round}(0.4 \times \text{Audience} + 0.3 \times 
 
 *   **Score $\ge 7.0$ (Qualified)**: The company is saved to history (`learned_leads.json`), added to the active dashboard, and exported to your reports (DOCX/CSV).
 *   **Score $< 7.0$ (Discarded)**: The company is skipped, logged as `[DISCARDED]`, and excluded from all exports.
+
+---
+
+## Document Navigation
+
+*   [README.md](README.md) — Product Overview & Launch
+*   [DOCUMENTATION_V1.md](DOCUMENTATION_V1.md) — User & Admin Operations Guide
+*   [USAGE.md](USAGE.md) — Environment variables & CLI usage reference
+*   [ARCHITECTURE.md](ARCHITECTURE.md) — Project layout & Module maps
+*   [TECHNICAL_ARCHITECTURE.md](TECHNICAL_ARCHITECTURE.md) — Technical system design details
+*   [WORKFLOW.md](WORKFLOW.md) — Pipeline data processing stages
+*   [OWASP_TOP_10.md](OWASP_TOP_10.md) — Security remediations & Checklist
+*   [Operations-Runbook.md](Operations-Runbook.md) — Operations & Troubleshooting runbook
+*   [INTEGRATIONS_LIST.md](INTEGRATIONS_LIST.md) — API configurations & Cost structure
+*   [LEAD_QUALIFICATION_CRITERIA.md](LEAD_QUALIFICATION_CRITERIA.md) — Fit scoring framework & Criteria

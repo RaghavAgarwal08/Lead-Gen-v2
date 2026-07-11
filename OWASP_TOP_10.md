@@ -25,7 +25,7 @@ This document details:
 | **A05:2021** | **Security Misconfiguration** | **Secure** | Configured CORS safely. Disabled auto-generated Swagger UI and ReDoc pages (`docs_url=None`, `redoc_url=None`) on production instances if `APP_PASSWORD` is configured, preventing API endpoint discovery by attackers. |
 | **A06:2021** | **Vulnerable & Outdated Components** | **Mitigated** (Was Unpinned) | Pinned all third-party python dependencies, including `fastapi` and `uvicorn`, to stable, security-audited versions in `requirements.txt` to eliminate package injection/hijacking. |
 | **A07:2021** | **Identification & Authentication Failures** | **Mitigated** (Was Vulnerable) | Added a high-security `APP_PASSWORD` validation check. Unlocking the admin dashboard requires an environment passkey, which is securely stored in browser `localStorage` and sent via the custom `X-App-Password` header. |
-| **A08:2021** | **Software & Data Integrity Failures** | **Secure** | Data files (`learned_leads.json`, reports) are serialized securely using standard Python `json` libraries. Ephemeral server restarts on platforms like Vercel copy initial learned leads files to `/tmp` gracefully to prevent state corruption. |
+| **A08:2021** | **Software & Data Integrity Failures** | **Secure** | Data files (`learned_leads.json`, reports) are serialized securely using standard Python `json` libraries. Local files are updated in place, and mounting persistent storage volumes prevents state loss during cloud container updates. |
 | **A09:2021** | **Security Logging & Monitoring Failures** | **Secure** | Built in real-time execution logger displaying debug details. Failed API interactions are caught, handled gracefully, and explicitly logged to the dashboard terminal with color-coded warning/error indicators. |
 | **A10:2021** | **Server-Side Request Forgery (SSRF)** | **Secure** | The server does not fetch arbitrary URLs requested by end users. Target URLs are generated automatically by search APIs or AI. Scrapes are executed through the third-party Firecrawl cloud service, preventing direct server request forgery to local network devices. |
 
@@ -98,3 +98,18 @@ APP_PASSWORD="choose_a_strong_password_here"
 - [x] **Flawless Execution**: Frontend and CLI flows run cleanly.
 
 **The Timidly Inc Lead Intelligence Platform is certified secure against the OWASP Top 10 Risks.**
+
+---
+
+## Document Navigation
+
+*   [README.md](README.md) — Product Overview & Launch
+*   [DOCUMENTATION_V1.md](DOCUMENTATION_V1.md) — User & Admin Operations Guide
+*   [USAGE.md](USAGE.md) — Environment variables & CLI usage reference
+*   [ARCHITECTURE.md](ARCHITECTURE.md) — Project layout & Module maps
+*   [TECHNICAL_ARCHITECTURE.md](TECHNICAL_ARCHITECTURE.md) — Technical system design details
+*   [WORKFLOW.md](WORKFLOW.md) — Pipeline data processing stages
+*   [OWASP_TOP_10.md](OWASP_TOP_10.md) — Security remediations & Checklist
+*   [Operations-Runbook.md](Operations-Runbook.md) — Operations & Troubleshooting runbook
+*   [INTEGRATIONS_LIST.md](INTEGRATIONS_LIST.md) — API configurations & Cost structure
+*   [LEAD_QUALIFICATION_CRITERIA.md](LEAD_QUALIFICATION_CRITERIA.md) — Fit scoring framework & Criteria

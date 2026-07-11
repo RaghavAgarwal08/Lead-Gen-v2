@@ -240,3 +240,18 @@ The model progressively learns:
 - Which **sponsorship packages** tend to be recommended for which company profiles
 - How to frame **"why this company is a lead"** with concrete, specific reasoning
 - The level of **founder background detail** expected in the output
+
+---
+
+## Document Navigation
+
+*   [README.md](README.md) — Product Overview & Launch
+*   [DOCUMENTATION_V1.md](DOCUMENTATION_V1.md) — User & Admin Operations Guide
+*   [USAGE.md](USAGE.md) — Environment variables & CLI usage reference
+*   [ARCHITECTURE.md](ARCHITECTURE.md) — Project layout & Module maps
+*   [TECHNICAL_ARCHITECTURE.md](TECHNICAL_ARCHITECTURE.md) — Technical system design details
+*   [WORKFLOW.md](WORKFLOW.md) — Pipeline data processing stages
+*   [OWASP_TOP_10.md](OWASP_TOP_10.md) — Security remediations & Checklist
+*   [Operations-Runbook.md](Operations-Runbook.md) — Operations & Troubleshooting runbook
+*   [INTEGRATIONS_LIST.md](INTEGRATIONS_LIST.md) — API configurations & Cost structure
+*   [LEAD_QUALIFICATION_CRITERIA.md](LEAD_QUALIFICATION_CRITERIA.md) — Fit scoring framework & Criteria

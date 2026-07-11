@@ -16,20 +16,7 @@ from utils.mailer import send_leads_report
 from core.twitter import search_twitter_handle, scrape_recent_tweets, extract_handle_from_twitter_url
 
 
-IS_VERCEL = bool(os.environ.get("VERCEL"))
-if IS_VERCEL:
-    MEMORY_FILE = "/tmp/learned_leads.json"
-    # Bootstrap /tmp/learned_leads.json from committed file if not present
-    if not os.path.exists(MEMORY_FILE):
-        src = os.path.join(os.path.dirname(os.path.abspath(__file__)), "learned_leads.json")
-        if os.path.exists(src):
-            import shutil
-            try:
-                shutil.copy(src, MEMORY_FILE)
-            except Exception as e:
-                print(f"[VERCEL] Warning: Failed to copy learned_leads.json to /tmp: {e}")
-else:
-    MEMORY_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "learned_leads.json")
+MEMORY_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "learned_leads.json")
 
 
 def get_lead_from_memory(company_name: str) -> dict:

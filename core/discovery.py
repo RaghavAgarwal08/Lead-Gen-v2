@@ -196,11 +196,7 @@ def get_existing_profile_company_names() -> set:
 
 def get_learned_company_names() -> set:
     """Gets the set of company names in the learned database."""
-    is_vercel = bool(os.environ.get("VERCEL"))
-    if is_vercel:
-        memory_file = "/tmp/learned_leads.json"
-    else:
-        memory_file = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "learned_leads.json")
+    memory_file = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "learned_leads.json")
         
     if os.path.exists(memory_file):
         try:

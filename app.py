@@ -14,9 +14,9 @@ from pydantic import BaseModel
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 import config
-from main import get_lead_from_memory, save_lead_to_memory, MEMORY_FILE, IS_VERCEL
+from main import get_lead_from_memory, save_lead_to_memory, MEMORY_FILE
 
-BASE_DIR = "/tmp" if IS_VERCEL else os.path.dirname(os.path.abspath(__file__))
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 from core.discovery import discover_companies, pre_qualify_companies_with_gpt
 from core.contacts import find_contact_person, extract_contact_info
 from core.enricher import scrape_website_content, fetch_firmographics, fetch_country
@@ -544,7 +544,7 @@ def serve_index():
         return FileResponse(index_path)
     raise HTTPException(status_code=404, detail="Frontend index page not found.")
 
-# Mount static folder only for local dev (Vercel routes static assets natively)
+# Mount static folder
 static_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static")
-if not IS_VERCEL and os.path.exists(static_dir):
+if os.path.exists(static_dir):
     app.mount("/", StaticFiles(directory=static_dir), name="static")

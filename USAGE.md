@@ -207,7 +207,7 @@ Your `.env` file is missing or the token field is empty. Verify the file exists 
 
 ### "Dashboard Locked" authentication modal loop / 401 API errors
 Your entered passkey does not match the `APP_PASSWORD` set in your server's configuration:
-1. Verify the `APP_PASSWORD` parameter in your `.env` (or Vercel Settings) is correct.
+1. Verify the `APP_PASSWORD` parameter in your `.env` (or Render Dashboard Settings) is correct.
 2. Restart the FastAPI server to load the revised value.
 3. If credentials were changed recently, click **Lock Dashboard** to wipe out invalid cookies/localStorage buffers and re-authenticate.
 
@@ -235,3 +235,18 @@ These are non-fatal log-streaming timeouts from the Apify client. They appear as
 | 50 | ~$2.00 | ~$0.25 | 50 credits | ~$2.50 |
 
 The Apify free tier ($5/month) comfortably supports 10–25 leads per run for regular use.
+
+---
+
+## Document Navigation
+
+*   [README.md](README.md) — Product Overview & Launch
+*   [DOCUMENTATION_V1.md](DOCUMENTATION_V1.md) — User & Admin Operations Guide
+*   [USAGE.md](USAGE.md) — Environment variables & CLI usage reference
+*   [ARCHITECTURE.md](ARCHITECTURE.md) — Project layout & Module maps
+*   [TECHNICAL_ARCHITECTURE.md](TECHNICAL_ARCHITECTURE.md) — Technical system design details
+*   [WORKFLOW.md](WORKFLOW.md) — Pipeline data processing stages
+*   [OWASP_TOP_10.md](OWASP_TOP_10.md) — Security remediations & Checklist
+*   [Operations-Runbook.md](Operations-Runbook.md) — Operations & Troubleshooting runbook
+*   [INTEGRATIONS_LIST.md](INTEGRATIONS_LIST.md) — API configurations & Cost structure
+*   [LEAD_QUALIFICATION_CRITERIA.md](LEAD_QUALIFICATION_CRITERIA.md) — Fit scoring framework & Criteria

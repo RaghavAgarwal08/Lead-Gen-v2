@@ -71,7 +71,7 @@ graph TD
 The tech stack is selected for high performance, ease of deployment, and minimal operational overhead:
 
 *   **FastAPI (Python 3.10+)**: Chosen for its fast development speed, asynchronous request handling, automatic OpenAPI/Swagger documentation, and native support for background tasks and thread orchestration.
-*   **Vanilla Frontend (HTML5 / Vanilla JS / Vanilla CSS)**: Replaces complex frontend build pipelines (like React/Webpack). Operates with zero build steps, serving pages instantly over Render or Vercel static endpoints. Styling implements premium glassmorphism, HSL tail-colors, dark modes, and transition micro-animations.
+*   **Vanilla Frontend (HTML5 / Vanilla JS / Vanilla CSS)**: Replaces complex frontend build pipelines (like React/Webpack). Operates with zero build steps, serving pages instantly over Render. Styling implements premium glassmorphism, HSL tail-colors, dark modes, and transition micro-animations.
 *   **File-Based JSON Cache (`learned_leads.json`)**: Eliminates the database management layer (e.g. Postgres or Redis). Serves as a lightweight memory store, enabling fast duplication filtering, self-learning few-shot training, and caching.
 *   **Pydantic (Pydantic v2)**: Used to enforce structured data types throughout the pipeline, particularly matching JSON responses from OpenAI to specific lead schemas.
 
@@ -127,3 +127,18 @@ Framework environments (`fastapi` and `uvicorn`) are pinned to stable, security-
 1.  **Per-Lead Error Isolation**: The loop in `app.py` runs inside a try-except wrapper. A timeout or scraper failure on one lead will log a warning and advance to the next, protecting the execution batch.
 2.  **Scraper Redundancy**: If Apify search scrapers fail or run out of credits, the platform triggers a fail-safe that uses OpenAI to brainstorm target leads matching the ICP that have not already been targeted.
 3.  **Port Blocking Workaround**: Free tier cloud hosts block outbound SMTP ports 25, 465, and 587. By integrating the Resend HTTP API (communicating over HTTPS port 443), we bypass these port blocks entirely.
+
+---
+
+## Document Navigation
+
+*   [README.md](README.md) — Product Overview & Launch
+*   [DOCUMENTATION_V1.md](DOCUMENTATION_V1.md) — User & Admin Operations Guide
+*   [USAGE.md](USAGE.md) — Environment variables & CLI usage reference
+*   [ARCHITECTURE.md](ARCHITECTURE.md) — Project layout & Module maps
+*   [TECHNICAL_ARCHITECTURE.md](TECHNICAL_ARCHITECTURE.md) — Technical system design details
+*   [WORKFLOW.md](WORKFLOW.md) — Pipeline data processing stages
+*   [OWASP_TOP_10.md](OWASP_TOP_10.md) — Security remediations & Checklist
+*   [Operations-Runbook.md](Operations-Runbook.md) — Operations & Troubleshooting runbook
+*   [INTEGRATIONS_LIST.md](INTEGRATIONS_LIST.md) — API configurations & Cost structure
+*   [LEAD_QUALIFICATION_CRITERIA.md](LEAD_QUALIFICATION_CRITERIA.md) — Fit scoring framework & Criteria

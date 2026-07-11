@@ -2,29 +2,29 @@
 
 > An intelligent, self-learning lead generation tool built for [Timidly Inc](https://timidly.com) (SomitraSR). The pipeline autonomously discovers, enriches, and scores startup companies as potential sponsorship leads — then delivers fully formatted prospect reports with tailored outreach strategies.
 
-🔗 **Live App:** [https://lead-gen-v2-if0t931gi-raghav-agarwals-projects-306aac5f.vercel.app](https://lead-gen-v2-if0t931gi-raghav-agarwals-projects-306aac5f.vercel.app)
-
 ---
 
-## Deploy to Vercel (One-Click Launch)
+## Deploy to Render (Production Web Service Launch)
 
-You can launch and run this application directly in your browser without using the terminal:
-
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fyour-username%2Fyour-repo-name)
+You can launch and operate this application in the cloud using Render:
 
 ### Setup Steps:
-1. **Push to GitHub**: Create a new private repository on GitHub and push this project directory to it.
-2. **Import to Vercel**:
-   - Go to your [Vercel Dashboard](https://vercel.com), click **Add New > Project**, and import your repository.
-   - Or click the **Deploy with Vercel** button above (update `your-username/your-repo-name` to match your repository link).
-3. **Set Environment Variables**: During import or under Project Settings > Environment Variables, add the following credentials:
+1. **Push to GitHub**: Create a private repository on GitHub and push this project directory to it.
+2. **Create Web Service on Render**:
+   - Go to your [Render Dashboard](https://dashboard.render.com).
+   - Click **New + > Web Service** and connect your GitHub repository.
+3. **Configure Settings**:
+   - **Environment**: `Python 3`
+   - **Build Command**: `pip install -r requirements.txt`
+   - **Start Command**: `python -m uvicorn app:app --host 0.0.0.0 --port $PORT`
+4. **Set Environment Variables**: In the **Environment** tab, click **Add Environment Variable** and add the following keys:
    - `OPENAI_API_KEY`
    - `APIFY_API_TOKEN`
    - `FIRECRAWL_API_KEY`
-   - `APP_PASSWORD` (Highly Recommended - secure dashboard passkey to protect endpoints and views)
-   - `SMTP_USER` (Optional - for email report dispatch)
-   - `SMTP_PASSWORD` (Optional - for email report dispatch)
-4. **Launch**: Once Vercel completes the deployment, it will generate a permanent live URL (e.g., `https://your-project.vercel.app`). Bookmark this URL to launch the dashboard and run the lead generation pipeline with a single click anytime!
+   - `APP_PASSWORD` (Highly Recommended - secure administrative passkey to lock the dashboard UI)
+   - `SMTP_USER` (Optional - fallback Gmail address for email reports)
+   - `SMTP_PASSWORD` (Optional - Google App Password for email reports)
+5. **Launch**: Render will build the container and deploy it, generating a secure live HTTPS URL. Open this URL to access your dashboard panel.
 
 ---
 
@@ -121,3 +121,18 @@ Every lead record includes:
 ## License
 
 Private — Timidly Inc. All rights reserved.
+
+---
+
+## Document Navigation
+
+*   [README.md](README.md) — Product Overview & Launch
+*   [DOCUMENTATION_V1.md](DOCUMENTATION_V1.md) — User & Admin Operations Guide
+*   [USAGE.md](USAGE.md) — Environment variables & CLI usage reference
+*   [ARCHITECTURE.md](ARCHITECTURE.md) — Project layout & Module maps
+*   [TECHNICAL_ARCHITECTURE.md](TECHNICAL_ARCHITECTURE.md) — Technical system design details
+*   [WORKFLOW.md](WORKFLOW.md) — Pipeline data processing stages
+*   [OWASP_TOP_10.md](OWASP_TOP_10.md) — Security remediations & Checklist
+*   [Operations-Runbook.md](Operations-Runbook.md) — Operations & Troubleshooting runbook
+*   [INTEGRATIONS_LIST.md](INTEGRATIONS_LIST.md) — API configurations & Cost structure
+*   [LEAD_QUALIFICATION_CRITERIA.md](LEAD_QUALIFICATION_CRITERIA.md) — Fit scoring framework & Criteria
