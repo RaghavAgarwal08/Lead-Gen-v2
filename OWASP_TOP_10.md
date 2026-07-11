@@ -39,6 +39,7 @@ This document details:
   1. **Backend Route Guardians**: Added a centralized dependency in `app.py` called `verify_password`. When an optional `APP_PASSWORD` environment variable is defined in the server config, the backend denies all endpoints under `/api/*` (returning `HTTP 401 Unauthorized`) unless a matching key is sent via the `X-App-Password` request header.
   2. **Frontend Authentication Portal**: Integrated a responsive, glassmorphism modal overlay in `static/index.html` and styled it in `static/style.css`.
   3. **Automatic Re-Authentication**: In `static/app.js`, if any background API call returns a `401` status, the local token is cleared, the dashboard is locked, and the modal pops up prompting the user to authenticate.
+  4. **Manual Session Locking**: Added a red "Lock Dashboard" button in the sidebar. Clicking it prompts for confirmation, clears the cached `localStorage` passkey, and instantly redirects the user back to the login screen modal to secure the dashboard session manually.
 
 ### A03:2021 — Injection (DOM-Based Cross-Site Scripting)
 * **Initial Hazard**: Crawlers gather startup taglines, company descriptions, and founder details from Product Hunt, Google, Y Combinator, and the open web. Because these variables were rendered directly into the HTML using Javascript's `innerHTML` template strings, if a crawled startup was carrying a malicious name like `<img src=x onerror=alert(document.cookie)>`, it would execute script payloads in the user's browser session.

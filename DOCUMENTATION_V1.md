@@ -104,6 +104,10 @@ python main.py --limit 10 --email "your-email@gmail.com"
 *   **Local Run**: The reports are saved in the project root folder.
 *   **Email Delivery**: If an email address is specified at runtime, the generated DOCX and CSV files will be emailed to your inbox.
 
+### Administrative Authentication & Security (Logout)
+*   **Secure Dashboard Access**: If `APP_PASSWORD` is configured in your staging or production environment, loading the dashboard will prompt you with a login modal overlay.
+*   **Locking the Dashboard**: Click the red **Lock Dashboard** button at the bottom of the sidebar navigation to sign out. This immediately deletes the credentials cached in the browser's local memory (`localStorage`) and locks the admin dashboard panel.
+
 ### Handling Common Errors
 *   **"No target prospects found"**: This occurs if the discovered companies were all flagged as duplicates (already processed or present in the ICP list) or if the Apify/Firecrawl free credits are fully exhausted. Reset your `learned_leads.json` to start fresh, or check credits in the Dashboard.
 *   **"Firecrawl failed: DNS resolution failed"**: This means the company's domain name is incorrect or currently inactive. The pipeline ignores this failure and automatically falls back to firmographic Google snippets, meaning the pitch will still generate successfully.
