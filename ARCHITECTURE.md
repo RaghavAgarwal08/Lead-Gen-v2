@@ -7,7 +7,7 @@
 ## Directory Structure
 
 ```
-lead-gen-v0/
+Lead Gen V2/
 ├── .env.example              # Template for environment variables (safe to commit)
 ├── .env                      # Actual credentials (git-ignored, never committed)
 ├── .gitignore                # Git exclusion rules
@@ -15,9 +15,11 @@ lead-gen-v0/
 ├── ARCHITECTURE.md           # This file — scaffold and module map
 ├── WORKFLOW.md               # End-to-end technical workflow documentation
 ├── USAGE.md                  # Setup and usage instructions
-├── requirements.txt          # Python dependency manifest
+├── OWASP_TOP_10.md           # OWASP Top 10 compliance checklist and remediations
+├── requirements.txt          # Python dependency manifest (pinned versions)
 ├── config.py                 # Centralized configuration loader
 ├── main.py                   # CLI entry point and pipeline orchestrator
+├── app.py                    # FastAPI web server backend & secure api endpoints
 │
 ├── core/                     # Core business logic modules
 │   ├── __init__.py
@@ -29,7 +31,12 @@ lead-gen-v0/
 │
 ├── utils/                    # Utility modules
 │   ├── __init__.py
-│   └── mailer.py             # Gmail SMTP email delivery
+│   └── mailer.py             # Gmail SMTP email delivery & Resend HTTP API support
+│
+├── static/                   # Web Dashboard frontend assets
+│   ├── index.html            # Dashboard structure (features glassmorphic auth modal)
+│   ├── style.css             # Stylesheet (animations, colors, design rules)
+│   └── app.js                # Frontend client logic (XSS sanitization, fetch interceptor)
 │
 ├── data/                     # Reference data (ICP profiles)
 │   ├── New Prospect List.docx    # Original ICP prospect list (Word format)
@@ -45,11 +52,12 @@ lead-gen-v0/
 
 ## Module Responsibilities
 
-### Entry Point
+### Entry Points
 
 | File | Role |
 |------|------|
 | **`main.py`** | CLI argument parsing, interactive prompts, and full pipeline orchestration. Manages the self-learning memory cache (`learned_leads.json`), coordinates all core modules in sequence, and handles error recovery per-lead so a single failure never aborts the entire batch. |
+| **`app.py`** | FastAPI server hosting the Web Admin Dashboard. Declares background runner threads (`PipelineManager`) and secures REST API endpoints via `APP_PASSWORD` checks. |
 
 ### Configuration
 
@@ -73,6 +81,14 @@ lead-gen-v0/
 | Module | Responsibility |
 |--------|---------------|
 | **`mailer.py`** | **Email Delivery.** Sends the generated DOCX and CSV as email attachments via Gmail SMTP with TLS. Uses the credentials from `.env`. Gracefully skips sending if SMTP is not configured. |
+
+### Web Dashboard Client (`static/`)
+
+| File | Responsibility |
+|------|----------------|
+| **`index.html`** | Structure of the administrator panel (includes the glassmorphic authentication modal block). |
+| **`style.css`** | Premium CSS guidelines, transitions, layout rules, and animations. |
+| **`app.js`** | JavaScript client-side operations. Intercepts fetch calls to append authentication headers, handles session timeout redirects, and escapes dynamic crawled output parameters to prevent XSS. |
 
 ### Data Files
 

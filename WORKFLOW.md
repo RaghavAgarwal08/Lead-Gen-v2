@@ -6,7 +6,11 @@
 
 ## Overview
 
-The pipeline transforms an existing Ideal Customer Profile (ICP) document into a stream of enriched, AI-scored, net-new startup leads — complete with decision-maker contacts, tailored pitches, and sponsorship recommendations. The entire process runs from a single CLI command with no manual intervention.
+The pipeline transforms an existing Ideal Customer Profile (ICP) document into a stream of enriched, AI-scored, net-new startup leads — complete with decision-maker contacts, tailored pitches, and sponsorship recommendations. 
+
+In **Lead Gen V2**, this workflow can be operated in two modes:
+1. **Command Line Interface (CLI)**: Run `python main.py` directly to execute the pipeline locally.
+2. **Web Admin Dashboard**: Start the FastAPI server (`app.py`), unlock the interface using the `APP_PASSWORD` access passkey, and run and monitor the discovery process in real-time. All backend endpoints are secured, and dynamic HTML renders are sanitized to prevent script injection.
 
 ```
  ICP Prospect List (49 companies)

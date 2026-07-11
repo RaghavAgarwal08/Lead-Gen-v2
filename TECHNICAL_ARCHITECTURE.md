@@ -112,10 +112,18 @@ The platform orchestrates four critical external APIs:
 
 ## 5. Security & Fail-Safe Considerations
 
-### Secrets Management
-No secrets are committed to version control. Configuration is loaded in `config.py` from environment variables. For local deployment, these are loaded from a git-ignored `.env` file. For production, they are configured securely in Render's environment settings.
+### Secrets & Authentication Management
+*   **Secrets Isolation**: No API keys or SMTP passwords are committed to version control. Configuration parameters are loaded dynamically from environment variables or a local, git-ignored `.env` file.
+*   **Dashboard Authentication (A01:2021 & A07:2021)**: Backend API endpoints under `/api/*` are guarded by a security dependency (`verify_password`) checking for the `X-App-Password` header. Gating is conditional, relying on the `APP_PASSWORD` environment variable. If active, unauthorized requests are blocked with `HTTP 401 Unauthorized`.
+*   **Automatic & Manual Session Gating**: The browser client automatically intercepts network requests to attach authentication tokens. A red **Lock Dashboard** button allows users to manually clear credentials from `localStorage`, instantly locking the UI.
+
+### DOM Cross-Site Scripting (XSS) Sanitization (A03:2021)
+Because the pipeline scrapes external text strings from various websites, the frontend enforces a strict sanitization protocol. All dynamic properties (such as taglines, startup names, executive fields, and pitches) are escaped to entity representations (`escapeHtml`) before insertion into the page DOM, blocking client-side injection flaws.
+
+### Dependency Integrity (A06:2021)
+Framework environments (`fastapi` and `uvicorn`) are pinned to stable, security-audited versions in `requirements.txt` to mitigate dependency-injection risks and maintain operational predictability during server deployments.
 
 ### Robust Fail-Safe Design
 1.  **Per-Lead Error Isolation**: The loop in `app.py` runs inside a try-except wrapper. A timeout or scraper failure on one lead will log a warning and advance to the next, protecting the execution batch.
 2.  **Scraper Redundancy**: If Apify search scrapers fail or run out of credits, the platform triggers a fail-safe that uses OpenAI to brainstorm target leads matching the ICP that have not already been targeted.
-3.  **Port Blocking Workaround**: Free tier cloud hosts (like Render) block outbound SMTP ports 25, 465, and 587. By integrating the Resend HTTP API (communicating over HTTPS port 443), we bypass these port blocks entirely.
+3.  **Port Blocking Workaround**: Free tier cloud hosts block outbound SMTP ports 25, 465, and 587. By integrating the Resend HTTP API (communicating over HTTPS port 443), we bypass these port blocks entirely.

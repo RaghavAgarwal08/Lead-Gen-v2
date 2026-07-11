@@ -94,6 +94,14 @@ SMTP_PASSWORD="abcdefghijklmnop"
 ```
 > Remove any spaces from the App Password.
 
+### Dashboard Admin Password (Access Control Gate)
+To protect your generated leads database, API credit usage dashboards, and run control consoles, set up an administrative access password:
+1. Open `.env` and add:
+```env
+APP_PASSWORD="choose_a_strong_password_here"
+```
+> **Security Behavior:** If omitted, the dashboard loads in open development mode. If defined, the application gates all web API endpoints and frontend views behind a secure glassmorphism authentication modal.
+
 ---
 
 ## 4. Prepare the ICP Prospect List
@@ -149,6 +157,17 @@ python main.py --email "your-email@gmail.com" --limit 5
 | `--email` | string | *(prompted)* | Recipient email for the report |
 | `--limit` | integer | *(prompted)* | Number of new leads to generate |
 
+### Web Admin Dashboard Mode (Recommended)
+
+To launch the secure, interactive glassmorphic web dashboard (enabling real-time log outputs, scored lead dossiers, usage graphs, and exports):
+```bash
+python -m uvicorn app:app --host 127.0.0.1 --port 8000 --reload
+```
+Once the local server initializes:
+1. Open your browser and navigate to `http://127.0.0.1:8000`.
+2. If password security is active, authenticate via the overlay gate.
+3. Click the red **Lock Dashboard** sidebar option at any time to clear your session credentials and lock the dashboard.
+
 ---
 
 ## 6. Output Files
@@ -185,6 +204,12 @@ echo [] > learned_leads.json
 
 ### "APIFY_API_TOKEN is not set"
 Your `.env` file is missing or the token field is empty. Verify the file exists and contains the correct token.
+
+### "Dashboard Locked" authentication modal loop / 401 API errors
+Your entered passkey does not match the `APP_PASSWORD` set in your server's configuration:
+1. Verify the `APP_PASSWORD` parameter in your `.env` (or Vercel Settings) is correct.
+2. Restart the FastAPI server to load the revised value.
+3. If credentials were changed recently, click **Lock Dashboard** to wipe out invalid cookies/localStorage buffers and re-authenticate.
 
 ### "Firecrawl failed: DNS resolution failed"
 The inferred website URL is wrong (e.g., the company's domain doesn't match its name). The pipeline will continue with reduced context — the AI pitch will still be generated using firmographic data.

@@ -21,6 +21,7 @@ You can launch and run this application directly in your browser without using t
    - `OPENAI_API_KEY`
    - `APIFY_API_TOKEN`
    - `FIRECRAWL_API_KEY`
+   - `APP_PASSWORD` (Highly Recommended - secure dashboard passkey to protect endpoints and views)
    - `SMTP_USER` (Optional - for email report dispatch)
    - `SMTP_PASSWORD` (Optional - for email report dispatch)
 4. **Launch**: Once Vercel completes the deployment, it will generate a permanent live URL (e.g., `https://your-project.vercel.app`). Bookmark this URL to launch the dashboard and run the lead generation pipeline with a single click anytime!
@@ -107,11 +108,13 @@ Every lead record includes:
 | Tool | Purpose |
 |------|---------|
 | **Python 3.12+** | Core runtime |
+| **FastAPI** | Web server backend & secure REST endpoints |
+| **Vanilla HTML/CSS/JS** | Responsive glassmorphic dashboard UI |
 | **OpenAI GPT-4o-mini** | Pitch generation with structured outputs |
 | **Apify** | Google Search scraping, LinkedIn lookups, contact extraction |
 | **Firecrawl** | Website crawling and markdown conversion |
 | **python-docx** | DOCX report generation |
-| **Gmail SMTP** | Email delivery |
+| **Gmail SMTP / Resend** | Email delivery |
 
 ---
 
