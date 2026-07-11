@@ -16,6 +16,8 @@ Lead Gen V2/
 ├── WORKFLOW.md               # End-to-end technical workflow documentation
 ├── USAGE.md                  # Setup and usage instructions
 ├── OWASP_TOP_10.md           # OWASP Top 10 compliance checklist and remediations
+├── Operations-Runbook.md     # Production operations & troubleshooting runbook
+├── Client-UAT-Package.md     # Client User Acceptance Testing package
 ├── requirements.txt          # Python dependency manifest (pinned versions)
 ├── config.py                 # Centralized configuration loader
 ├── main.py                   # CLI entry point and pipeline orchestrator
@@ -123,5 +125,6 @@ For a tool processing 5–50 leads per run, a flat JSON file is simpler, faster,
 *   [WORKFLOW.md](WORKFLOW.md) — Pipeline data processing stages
 *   [OWASP_TOP_10.md](OWASP_TOP_10.md) — Security remediations & Checklist
 *   [Operations-Runbook.md](Operations-Runbook.md) — Operations & Troubleshooting runbook
+*   [Client-UAT-Package.md](Client-UAT-Package.md) — Client User Acceptance Testing Package
 *   [INTEGRATIONS_LIST.md](INTEGRATIONS_LIST.md) — API configurations & Cost structure
 *   [LEAD_QUALIFICATION_CRITERIA.md](LEAD_QUALIFICATION_CRITERIA.md) — Fit scoring framework & Criteria

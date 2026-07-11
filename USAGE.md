@@ -248,5 +248,6 @@ The Apify free tier ($5/month) comfortably supports 10–25 leads per run for re
 *   [WORKFLOW.md](WORKFLOW.md) — Pipeline data processing stages
 *   [OWASP_TOP_10.md](OWASP_TOP_10.md) — Security remediations & Checklist
 *   [Operations-Runbook.md](Operations-Runbook.md) — Operations & Troubleshooting runbook
+*   [Client-UAT-Package.md](Client-UAT-Package.md) — Client User Acceptance Testing Package
 *   [INTEGRATIONS_LIST.md](INTEGRATIONS_LIST.md) — API configurations & Cost structure
 *   [LEAD_QUALIFICATION_CRITERIA.md](LEAD_QUALIFICATION_CRITERIA.md) — Fit scoring framework & Criteria
