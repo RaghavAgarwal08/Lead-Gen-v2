@@ -27,7 +27,7 @@ The platform consists of:
 The production service runs on the **Render** cloud platform:
 *   **Runtime Environment**: Python 3.12 Web Service.
 *   **Continuous Deployment**: Auto-deployments trigger automatically when changes are pushed to the GitHub repository's `main` branch.
-*   **Domain & SSL**: Hosted at a Render sub-domain or custom domain with automated Let's Encrypt TLS/SSL certificates managed by Render.
+*   **Domain & SSL**: Hosted at [https://lead-gen-v2.onrender.com/](https://lead-gen-v2.onrender.com/) with automated Let's Encrypt TLS/SSL certificates managed by Render.
 *   **Ephemeral Disk**: Render web services utilize container instances with ephemeral storage. File updates (including `learned_leads.json`) are reset during redeployments or container restarts unless a Persistent Volume is mounted.
 *   **Secrets Manager**: Configurations are securely saved under Render's **Environment Variables** dashboard panel.
 

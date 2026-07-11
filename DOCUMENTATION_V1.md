@@ -65,7 +65,7 @@ The pipeline automates this entire lifecycle. Within minutes, a single run disco
 ## 3. User Guide (Draft)
 
 ### Install or Access the Tool
-*   **Web Interface (Live Dashboard)**: Access your deployed cloud dashboard on Render (or your configured cloud provider).
+*   **Web Interface (Live Dashboard)**: Access the live cloud dashboard hosted on Render at [https://lead-gen-v2.onrender.com/](https://lead-gen-v2.onrender.com/).
 *   **Local Setup (CLI & Server)**: If running locally, clone the git repository, run the server, and navigate to `http://127.0.0.1:8000` in your web browser.
 
 ### Configure API Keys

@@ -29,7 +29,7 @@ To execute these test cases:
 *   **Time Commitment**: Approximately 15–20 minutes.
 *   **Required Browser**: Google Chrome or Mozilla Firefox (latest versions).
 *   **Required Device**: Desktop computer, laptop, or tablet.
-*   **Prerequisites**: Active internet connection and access to the web dashboard (either your Render cloud link or a local server running at `http://127.0.0.1:8000`).
+*   **Prerequisites**: Active internet connection and access to the web dashboard hosted on Render at [https://lead-gen-v2.onrender.com/](https://lead-gen-v2.onrender.com/) (or a local server running at `http://127.0.0.1:8000`).
 *   **Required Credentials**: The platform access password (e.g. `123456` or your configured password).
 
 ---

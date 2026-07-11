@@ -2,6 +2,8 @@
 
 > An intelligent, self-learning lead generation tool built for [Timidly Inc](https://timidly.com) (SomitraSR). The pipeline autonomously discovers, enriches, and scores startup companies as potential sponsorship leads — then delivers fully formatted prospect reports with tailored outreach strategies.
 
+🔗 **Live App:** [https://lead-gen-v2.onrender.com/](https://lead-gen-v2.onrender.com/)
+
 ---
 
 ## Deploy to Render (Production Web Service Launch)
