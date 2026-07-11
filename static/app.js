@@ -127,7 +127,9 @@ function setupTabNavigation() {
     menuButtons.forEach(btn => {
         btn.addEventListener('click', () => {
             const tabId = btn.getAttribute('data-tab');
-            switchTab(tabId);
+            if (tabId) {
+                switchTab(tabId);
+            }
         });
     });
 
@@ -138,6 +140,18 @@ function setupTabNavigation() {
             switchTab('directory');
         }
     });
+
+    // Logout / Lock Dashboard Button
+    const logoutBtn = document.getElementById('logout-menu-btn');
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', () => {
+            if (confirm('Are you sure you want to lock the dashboard?')) {
+                showLoginModal();
+                const passwordInput = document.getElementById('password-input');
+                if (passwordInput) passwordInput.value = '';
+            }
+        });
+    }
 }
 
 function switchTab(tabId) {
