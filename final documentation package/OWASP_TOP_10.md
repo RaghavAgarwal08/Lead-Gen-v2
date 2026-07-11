@@ -103,7 +103,7 @@ APP_PASSWORD="choose_a_strong_password_here"
 
 ## Document Navigation
 
-*   [README.md](README.md) — Product Overview & Launch
+*   [README.md](../README.md) — Product Overview & Launch
 *   [DOCUMENTATION_V1.md](DOCUMENTATION_V1.md) — User & Admin Operations Guide
 *   [USAGE.md](USAGE.md) — Environment variables & CLI usage reference
 *   [ARCHITECTURE.md](ARCHITECTURE.md) — Project layout & Module maps

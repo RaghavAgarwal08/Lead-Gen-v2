@@ -70,9 +70,9 @@ The tool will prompt you for:
 
 | Document | Description |
 |----------|-------------|
-| [`ARCHITECTURE.md`](ARCHITECTURE.md) | Project structure, scaffold, and module responsibilities |
-| [`WORKFLOW.md`](WORKFLOW.md) | End-to-end technical workflow, tools, and data flow |
-| [`USAGE.md`](USAGE.md) | Setup instructions, API key configuration, and CLI reference |
+| [`ARCHITECTURE.md`](final%20documentation%20package/ARCHITECTURE.md) | Project structure, scaffold, and module responsibilities |
+| [`WORKFLOW.md`](final%20documentation%20package/WORKFLOW.md) | End-to-end technical workflow, tools, and data flow |
+| [`USAGE.md`](final%20documentation%20package/USAGE.md) | Setup instructions, API key configuration, and CLI reference |
 
 ---
 
@@ -129,13 +129,13 @@ Private — Timidly Inc. All rights reserved.
 ## Document Navigation
 
 *   [README.md](README.md) — Product Overview & Launch
-*   [DOCUMENTATION_V1.md](DOCUMENTATION_V1.md) — User & Admin Operations Guide
-*   [USAGE.md](USAGE.md) — Environment variables & CLI usage reference
-*   [ARCHITECTURE.md](ARCHITECTURE.md) — Project layout & Module maps
-*   [TECHNICAL_ARCHITECTURE.md](TECHNICAL_ARCHITECTURE.md) — Technical system design details
-*   [WORKFLOW.md](WORKFLOW.md) — Pipeline data processing stages
-*   [OWASP_TOP_10.md](OWASP_TOP_10.md) — Security remediations & Checklist
-*   [Operations-Runbook.md](Operations-Runbook.md) — Operations & Troubleshooting runbook
-*   [Client-UAT-Package.md](Client-UAT-Package.md) — Client User Acceptance Testing Package
-*   [INTEGRATIONS_LIST.md](INTEGRATIONS_LIST.md) — API configurations & Cost structure
-*   [LEAD_QUALIFICATION_CRITERIA.md](LEAD_QUALIFICATION_CRITERIA.md) — Fit scoring framework & Criteria
+*   [DOCUMENTATION_V1.md](final%20documentation%20package/DOCUMENTATION_V1.md) — User & Admin Operations Guide
+*   [USAGE.md](final%20documentation%20package/USAGE.md) — Environment variables & CLI usage reference
+*   [ARCHITECTURE.md](final%20documentation%20package/ARCHITECTURE.md) — Project layout & Module maps
+*   [TECHNICAL_ARCHITECTURE.md](final%20documentation%20package/TECHNICAL_ARCHITECTURE.md) — Technical system design details
+*   [WORKFLOW.md](final%20documentation%20package/WORKFLOW.md) — Pipeline data processing stages
+*   [OWASP_TOP_10.md](final%20documentation%20package/OWASP_TOP_10.md) — Security remediations & Checklist
+*   [Operations-Runbook.md](final%20documentation%20package/Operations-Runbook.md) — Operations & Troubleshooting runbook
+*   [Client-UAT-Package.md](final%20documentation%20package/Client-UAT-Package.md) — Client User Acceptance Testing Package
+*   [INTEGRATIONS_LIST.md](final%20documentation%20package/INTEGRATIONS_LIST.md) — API configurations & Cost structure
+*   [LEAD_QUALIFICATION_CRITERIA.md](final%20documentation%20package/LEAD_QUALIFICATION_CRITERIA.md) — Fit scoring framework & Criteria

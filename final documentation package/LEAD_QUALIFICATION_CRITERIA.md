@@ -71,7 +71,7 @@ $$\text{Final Fit Score} = \text{round}(0.4 \times \text{Audience} + 0.3 \times 
 
 ## Document Navigation
 
-*   [README.md](README.md) — Product Overview & Launch
+*   [README.md](../README.md) — Product Overview & Launch
 *   [DOCUMENTATION_V1.md](DOCUMENTATION_V1.md) — User & Admin Operations Guide
 *   [USAGE.md](USAGE.md) — Environment variables & CLI usage reference
 *   [ARCHITECTURE.md](ARCHITECTURE.md) — Project layout & Module maps
