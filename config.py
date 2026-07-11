@@ -7,6 +7,7 @@ load_dotenv()
 APIFY_API_TOKEN = os.getenv("APIFY_API_TOKEN")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 FIRECRAWL_API_KEY = os.getenv("FIRECRAWL_API_KEY")
+APP_PASSWORD = os.getenv("APP_PASSWORD")
 
 # SMTP Configuration
 SMTP_HOST = os.getenv("SMTP_HOST", "smtp.gmail.com")

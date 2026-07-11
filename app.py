@@ -25,7 +25,24 @@ from core.exporter import export_docx, export_csv, export_json
 from utils.mailer import send_leads_report
 from core.twitter import search_twitter_handle, scrape_recent_tweets, extract_handle_from_twitter_url
 
-app = FastAPI(title="Timidly Inc Lead Generator")
+from fastapi.security import APIKeyHeader
+from fastapi import Security, Depends
+
+docs_url = "/docs" if not config.APP_PASSWORD else None
+redoc_url = "/redoc" if not config.APP_PASSWORD else None
+
+app = FastAPI(
+    title="Timidly Inc Lead Generator",
+    docs_url=docs_url,
+    redoc_url=redoc_url
+)
+
+api_key_header = APIKeyHeader(name="X-App-Password", auto_error=False)
+
+def verify_password(api_key: Optional[str] = Security(api_key_header)):
+    if config.APP_PASSWORD:
+        if not api_key or api_key != config.APP_PASSWORD:
+            raise HTTPException(status_code=401, detail="Unauthorized: Invalid APP_PASSWORD.")
 
 # Check and create static directory if needed
 os.makedirs("static", exist_ok=True)
@@ -306,7 +323,7 @@ class StartPipelineRequest(BaseModel):
     limit: int
     email: Optional[str] = ""
 
-@app.post("/api/generate")
+@app.post("/api/generate", dependencies=[Depends(verify_password)])
 def start_generation(req: StartPipelineRequest, background_tasks: BackgroundTasks):
     global manager
     with manager.lock:
@@ -318,7 +335,7 @@ def start_generation(req: StartPipelineRequest, background_tasks: BackgroundTask
     background_tasks.add_task(run_bg_pipeline, req.limit, req.email)
     return {"status": "started"}
 
-@app.get("/api/status")
+@app.get("/api/status", dependencies=[Depends(verify_password)])
 def get_status():
     global manager
     with manager.lock:
@@ -344,7 +361,7 @@ def get_status():
         }
 
 
-@app.get("/api/leads")
+@app.get("/api/leads", dependencies=[Depends(verify_password)])
 def get_leads():
     global manager
     with manager.lock:
@@ -361,13 +378,13 @@ def get_leads():
             
     return []
 
-@app.post("/api/reset")
+@app.post("/api/reset", dependencies=[Depends(verify_password)])
 def reset_pipeline():
     global manager
     manager.reset()
     return {"status": "reset"}
 
-@app.post("/api/cancel")
+@app.post("/api/cancel", dependencies=[Depends(verify_password)])
 def cancel_pipeline():
     global manager
     with manager.lock:
@@ -377,7 +394,7 @@ def cancel_pipeline():
             return {"status": "cancelling"}
     return {"status": "not_running"}
 
-@app.get("/api/history")
+@app.get("/api/history", dependencies=[Depends(verify_password)])
 def get_history():
     if os.path.exists(MEMORY_FILE):
         try:
@@ -387,7 +404,7 @@ def get_history():
             pass
     return []
 
-@app.post("/api/clear-history")
+@app.post("/api/clear-history", dependencies=[Depends(verify_password)])
 def clear_history():
     if os.path.exists(MEMORY_FILE):
         try:
@@ -398,7 +415,7 @@ def clear_history():
             raise HTTPException(status_code=500, detail=str(e))
     return {"status": "cleared"}
 
-@app.get("/api/config")
+@app.get("/api/config", dependencies=[Depends(verify_password)])
 def get_config_status():
     return {
         "openai": bool(config.OPENAI_API_KEY),
@@ -407,7 +424,7 @@ def get_config_status():
         "smtp": bool(config.SMTP_USER and config.SMTP_PASSWORD)
     }
 
-@app.get("/api/usage")
+@app.get("/api/usage", dependencies=[Depends(verify_password)])
 def get_api_usage():
     import requests
     
@@ -499,21 +516,21 @@ def get_api_usage():
     }
 
 
-@app.get("/api/download/docx")
+@app.get("/api/download/docx", dependencies=[Depends(verify_password)])
 def download_docx():
     docx_file = os.path.join(BASE_DIR, "Timidly_Prospects_Report.docx")
     if os.path.exists(docx_file):
         return FileResponse(docx_file, filename="Timidly_Prospects_Report.docx", media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document")
     raise HTTPException(status_code=404, detail="DOCX report not found. Run pipeline first.")
 
-@app.get("/api/download/csv")
+@app.get("/api/download/csv", dependencies=[Depends(verify_password)])
 def download_csv():
     csv_file = os.path.join(BASE_DIR, "Timidly_Prospects_Report.csv")
     if os.path.exists(csv_file):
         return FileResponse(csv_file, filename="Timidly_Prospects_Report.csv", media_type="text/csv")
     raise HTTPException(status_code=404, detail="CSV report not found. Run pipeline first.")
 
-@app.get("/api/download/json")
+@app.get("/api/download/json", dependencies=[Depends(verify_password)])
 def download_json():
     json_file = os.path.join(BASE_DIR, "Timidly_Prospects_Report.json")
     if os.path.exists(json_file):

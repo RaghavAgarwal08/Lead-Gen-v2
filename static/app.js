@@ -1,3 +1,41 @@
+// Override fetch to include authorization header and handle 401s globally
+const originalFetch = window.fetch;
+window.fetch = async function (url, options = {}) {
+    options.headers = options.headers || {};
+    
+    // Read password from localStorage
+    const savedPassword = localStorage.getItem('app_password');
+    if (savedPassword) {
+        options.headers['X-App-Password'] = savedPassword;
+    }
+    
+    try {
+        const response = await originalFetch(url, options);
+        if (response.status === 401) {
+            // Invalid credentials, prompt user
+            showLoginModal();
+        }
+        return response;
+    } catch (error) {
+        throw error;
+    }
+};
+
+function showLoginModal() {
+    localStorage.removeItem('app_password');
+    const modal = document.getElementById('login-modal');
+    if (modal) {
+        modal.classList.remove('hidden');
+    }
+}
+
+function hideLoginModal() {
+    const modal = document.getElementById('login-modal');
+    if (modal) {
+        modal.classList.add('hidden');
+    }
+}
+
 // State Manager
 let state = {
     activeTab: 'dashboard',
@@ -275,6 +313,46 @@ function setupFormControls() {
             }
         });
     }
+
+    // Setup Authentication Submit listeners
+    const submitPassBtn = document.getElementById('submit-password-btn');
+    const passwordInput = document.getElementById('password-input');
+    const loginErrorHint = document.getElementById('login-error-hint');
+
+    if (submitPassBtn && passwordInput) {
+        submitPassBtn.addEventListener('click', handleAuthenticationSubmit);
+        passwordInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                handleAuthenticationSubmit();
+            }
+        });
+    }
+
+    async function handleAuthenticationSubmit() {
+        const password = passwordInput.value.trim();
+        if (!password) return;
+        
+        localStorage.setItem('app_password', password);
+        
+        try {
+            if (loginErrorHint) loginErrorHint.style.display = 'none';
+            const response = await originalFetch('/api/config', {
+                headers: { 'X-App-Password': password }
+            });
+            if (response.ok) {
+                hideLoginModal();
+                checkPipelineStatus();
+                loadLeads();
+                loadHistory();
+                checkApiCredentials();
+            } else {
+                localStorage.removeItem('app_password');
+                if (loginErrorHint) loginErrorHint.style.display = 'block';
+            }
+        } catch (err) {
+            console.error('Login validation error:', err);
+        }
+    }
 }
 
 // Check Pipeline Execution Status
@@ -446,13 +524,13 @@ function renderLeadsList() {
         row.innerHTML = `
             <div class="lead-row-left">
                 <div class="lead-row-title-bar">
-                    <span class="lead-row-title">${lead.company_name}</span>
+                    <span class="lead-row-title">${escapeHtml(lead.company_name)}</span>
                     <span class="meta-badge">
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
-                        ${cleanDomain(lead.email ? lead.email.split('@')[1] : '') || 'website'}
+                        ${escapeHtml(cleanDomain(lead.email ? lead.email.split('@')[1] : '') || 'website')}
                     </span>
                 </div>
-                <div class="lead-row-tagline">${lead.tagline || 'No description listed.'}</div>
+                <div class="lead-row-tagline">${escapeHtml(lead.tagline || 'No description listed.')}</div>
             </div>
             <div class="lead-row-right">
                 <div class="score-badge-circle ${scoreClass}">${score}</div>
@@ -526,14 +604,14 @@ function renderHistoryList() {
         row.innerHTML = `
             <div class="lead-row-left">
                 <div class="lead-row-title-bar">
-                    <span class="lead-row-title">${lead.company_name}</span>
+                    <span class="lead-row-title">${escapeHtml(lead.company_name)}</span>
                     <span class="meta-badge">
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
-                        ${cleanDomain(lead.email ? lead.email.split('@')[1] : '') || 'website'}
+                        ${escapeHtml(cleanDomain(lead.email ? lead.email.split('@')[1] : '') || 'website')}
                     </span>
                     ${timestampHtml}
                 </div>
-                <div class="lead-row-tagline">${lead.tagline || 'No description listed.'}</div>
+                <div class="lead-row-tagline">${escapeHtml(lead.tagline || 'No description listed.')}</div>
             </div>
             <div class="lead-row-right">
                 <div class="score-badge-circle ${scoreClass}">${score}</div>
@@ -621,16 +699,16 @@ function openLeadDetails(lead) {
         <!-- HEADER dossier -->
         <div class="lead-detail-header-card">
             <div class="lead-header-info">
-                <h2>${lead.company_name}</h2>
-                <div class="tagline">${lead.tagline || 'No tagline listed.'}</div>
+                <h2>${escapeHtml(lead.company_name)}</h2>
+                <div class="tagline">${escapeHtml(lead.tagline || 'No tagline listed.')}</div>
                 <div class="lead-header-meta">
                     <span class="meta-badge">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
-                        ${lead.funding || 'Seed Funding'}
+                        ${escapeHtml(lead.funding || 'Seed Funding')}
                     </span>
                     <span class="meta-badge">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
-                        HQ: ${lead.country_based_in || 'United States'}
+                        HQ: ${escapeHtml(lead.country_based_in || 'United States')}
                     </span>
                 </div>
             </div>
@@ -639,7 +717,7 @@ function openLeadDetails(lead) {
                 <div class="score-badge-large ${scoreClass}">${score}</div>
                 <div class="score-detail-text">
                     <h4>Qualification Rating</h4>
-                    <p>${lead.score_justification || 'Analyzed matching developer-first ICP target criteria.'}</p>
+                    <p>${escapeHtml(lead.score_justification || 'Analyzed matching developer-first ICP target criteria.')}</p>
                 </div>
             </div>
         </div>
@@ -655,27 +733,27 @@ function openLeadDetails(lead) {
                 <div class="detail-grid">
                     <div class="detail-field">
                         <label>Decision Maker</label>
-                        <span class="value">${lead.contact_name || 'Not found'}</span>
+                        <span class="value">${escapeHtml(lead.contact_name || 'Not found')}</span>
                     </div>
                     <div class="detail-field">
                         <label>Job Title</label>
-                        <span class="value">${lead.contact_title || 'Founder / CTO'}</span>
+                        <span class="value">${escapeHtml(lead.contact_title || 'Founder / CTO')}</span>
                     </div>
                     <div class="detail-field">
                         <label>Email Address</label>
-                        <a href="mailto:${lead.email}" class="value">${lead.email || 'Not found'}</a>
+                        <a href="mailto:${escapeHtml(lead.email)}" class="value">${escapeHtml(lead.email || 'Not found')}</a>
                     </div>
                     <div class="detail-field">
                         <label>Phone Number</label>
-                        <span class="value">${lead.phone || 'Not found'}</span>
+                        <span class="value">${escapeHtml(lead.phone || 'Not found')}</span>
                     </div>
                     <div class="detail-field">
                         <label>LinkedIn Dossier</label>
-                        ${lead.linkedin !== 'Not listed' ? `<a href="${lead.linkedin.startsWith('http') ? lead.linkedin : 'https://' + lead.linkedin}" target="_blank" class="value">Open LinkedIn Profile ↗</a>` : '<span class="value text-muted">Not listed</span>'}
+                        ${lead.linkedin !== 'Not listed' ? `<a href="${escapeHtml(lead.linkedin.startsWith('http') ? lead.linkedin : 'https://' + lead.linkedin)}" target="_blank" class="value">Open LinkedIn Profile ↗</a>` : '<span class="value text-muted">Not listed</span>'}
                     </div>
                     <div class="detail-field">
                         <label>X / Twitter</label>
-                        ${lead.twitter !== 'Not listed' ? `<a href="${lead.twitter.startsWith('http') ? lead.twitter : 'https://' + lead.twitter}" target="_blank" class="value">Open Profile ↗</a>` : '<span class="value text-muted">Not listed</span>'}
+                        ${lead.twitter !== 'Not listed' ? `<a href="${escapeHtml(lead.twitter.startsWith('http') ? lead.twitter : 'https://' + lead.twitter)}" target="_blank" class="value">Open Profile ↗</a>` : '<span class="value text-muted">Not listed</span>'}
                     </div>
                 </div>
             </div>
@@ -688,17 +766,17 @@ function openLeadDetails(lead) {
                 </div>
                 <div class="detail-field">
                     <label>Recommended Sponsorship Package</label>
-                    <span class="value" style="font-size: 1.1rem; color: var(--primary); font-weight: 700;">${lead.recommended_package || 'Newsletter ad ($199)'}</span>
+                    <span class="value" style="font-size: 1.1rem; color: var(--primary); font-weight: 700;">${escapeHtml(lead.recommended_package || 'Newsletter ad ($199)')}</span>
                 </div>
                 
                 <div class="pitch-block">
                     <h4>Why This Company is a Fit</h4>
-                    <p>${lead.why_pitch_fits || 'No fit reasoning generated.'}</p>
+                    <p>${escapeHtml(lead.why_pitch_fits || 'No fit reasoning generated.')}</p>
                 </div>
                 
                 <div class="outreach-angle-box">
                     <h4>Tailored Outreach Hook</h4>
-                    <p>"${lead.tailored_outreach_angle || 'Hi there, noticed what you are building.'}"</p>
+                    <p>"${escapeHtml(lead.tailored_outreach_angle || 'Hi there, noticed what you are building.')}"</p>
                 </div>
             </div>
         </div>
@@ -713,11 +791,11 @@ function openLeadDetails(lead) {
                 </div>
                 <div class="detail-field" style="margin-bottom: 1rem;">
                     <label>Funding Status</label>
-                    <span class="value">${lead.funding || 'Unknown / Self-funded'}</span>
+                    <span class="value">${escapeHtml(lead.funding || 'Unknown / Self-funded')}</span>
                 </div>
                 <div class="detail-field">
                     <label>Executive / Founder Background</label>
-                    <span class="value" style="font-size: 0.9rem; line-height: 1.4;">${lead.background_of_founders || 'Background not available.'}</span>
+                    <span class="value" style="font-size: 0.9rem; line-height: 1.4;">${escapeHtml(lead.background_of_founders || 'Background not available.')}</span>
                 </div>
             </div>
 
@@ -856,7 +934,7 @@ async function loadApiUsage(cfg) {
                 html += `
                     <div class="usage-status-item">
                         <div class="usage-header">
-                            <span class="usage-title">🟢 Apify Account (${apifyUsage.username})</span>
+                            <span class="usage-title">🟢 Apify Account (${escapeHtml(apifyUsage.username)})</span>
                             <span class="usage-value-text">$${used.toFixed(2)} / $${limit.toFixed(2)} USD</span>
                         </div>
                         <div class="progress-bar-bg" style="background-color: var(--border-color); width: 100%; border-radius: 6px; height: 10px; overflow: hidden;">
@@ -872,7 +950,7 @@ async function loadApiUsage(cfg) {
                             <span class="usage-title">🔴 Apify Account Usage</span>
                             <span class="usage-value-text">Error checking usage</span>
                         </div>
-                        <span class="usage-info">Error details: ${apifyUsage.message || 'Connection failed.'}</span>
+                        <span class="usage-info">Error details: ${escapeHtml(apifyUsage.message || 'Connection failed.')}</span>
                     </div>
                 `;
             }
@@ -906,7 +984,7 @@ async function loadApiUsage(cfg) {
                             <span class="usage-title">🔴 Firecrawl Account Usage</span>
                             <span class="usage-value-text">Error checking usage</span>
                         </div>
-                        <span class="usage-info">Error details: ${firecrawlUsage.message || 'Connection failed.'}</span>
+                        <span class="usage-info">Error details: ${escapeHtml(firecrawlUsage.message || 'Connection failed.')}</span>
                     </div>
                 `;
             }

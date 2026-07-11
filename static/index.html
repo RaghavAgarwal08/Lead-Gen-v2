@@ -319,6 +319,30 @@
             </div>
         </main>
     </div>
+    <!-- Login Modal Overlay -->
+    <div id="login-modal" class="modal-overlay hidden">
+        <div class="modal-card auth-card">
+            <div class="modal-logo">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="color: var(--primary);">
+                    <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M2 17L12 22L22 17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M2 12L12 17L22 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <span style="font-weight: 700; font-size: 1.25rem; margin-left: 0.5rem; color: var(--text-primary);">Timidly Inc</span>
+            </div>
+            <h2 class="card-title mt-md" style="text-align: center; margin-top: 1rem;">Dashboard Locked</h2>
+            <p class="card-desc" style="text-align: center; margin-bottom: 1rem;">Enter the administrative APP_PASSWORD from your configuration to proceed.</p>
+            <div class="form-group">
+                <input type="password" id="password-input" placeholder="••••••••••••" class="text-input" style="text-align: center;">
+                <span class="field-hint" id="login-error-hint" style="color: var(--danger); display: none; text-align: center;">Authentication failed. Try again.</span>
+            </div>
+            <div class="form-actions mt-md" style="margin-top: 1.25rem;">
+                <button type="button" id="submit-password-btn" class="btn btn-primary" style="width: 100%;">
+                    <span>Unlock Platform</span>
+                </button>
+            </div>
+        </div>
+    </div>
 </body>
 <script src="app.js"></script>
 </html>
