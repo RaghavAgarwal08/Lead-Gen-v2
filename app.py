@@ -265,8 +265,8 @@ def run_bg_pipeline(limit: int, email: str):
                         resolved_twitter = "Not listed"
                         
                     resolved_phone = resolve_field(contact_details.get("phone"), ai_pitch.contact_phone)
-                    if not resolved_phone or "not found" in resolved_phone.lower():
-                        resolved_phone = "+1 (650) 456-7890"
+                    if not resolved_phone or "not found" in resolved_phone.lower() or resolved_phone == "+1 (650) 456-7890":
+                        resolved_phone = ""
                         
                     resolved_funding = resolve_field(firmographics.get("funding"), ai_pitch.funding, "Seed")
                     

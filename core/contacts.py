@@ -129,7 +129,7 @@ def extract_contact_info(company_name: str, domain: str) -> Dict[str, str]:
         
     if not config.APIFY_API_TOKEN:
         # Default fallback phone if Apify token missing
-        return {"email": f"hello@{domain.split('//')[-1]}", "phone": "+1 (650) 456-7890", "twitter": "Not listed"}
+        return {"email": f"hello@{domain.split('//')[-1]}", "phone": "", "twitter": "Not listed"}
         
     client = ApifyClient(config.APIFY_API_TOKEN)
     
@@ -148,7 +148,7 @@ def extract_contact_info(company_name: str, domain: str) -> Dict[str, str]:
         clean_name = re.sub(r'[^a-zA-Z0-9]', '', company_name).lower()
         return {
             "email": f"hello@{clean_name}.com",
-            "phone": "+1 (650) 456-7890",
+            "phone": "",
             "twitter": "Not listed"
         }
         
@@ -176,7 +176,7 @@ def extract_contact_info(company_name: str, domain: str) -> Dict[str, str]:
         
     # Standardize fallback for phone
     if phone == "Not found":
-        phone = "+1 (650) 456-7890"  # Plausible SF Bay Area number
+        phone = ""
         
     return {
         "email": emails[0] if emails else f"info@{domain.split('//')[-1]}",

@@ -51,7 +51,7 @@ class PitchAnalysis(BaseModel):
         description="The email address of the contact. If not explicitly found, guess a professional email like 'firstname@domain.com' or 'hello@domain.com'. Do not output 'Not found'."
     )
     contact_phone: str = Field(
-        description="A contact phone number for the company or founder. If not found, output a plausible US or international business/support phone number. Do not output 'Not found'."
+        description="A contact phone number for the company or founder. If not found, output an empty string. Do not output a placeholder or fake phone number."
     )
     funding: str = Field(
         description="Funding details (e.g. 'Seed - $2M', 'Series A - $15M', 'Bootstrapped'). Based on firmographics snippets or your knowledge. Do not output 'Unknown'."
@@ -91,7 +91,7 @@ def generate_personalized_pitch(
             contact_title=contact_info.get('title') if contact_info.get('title') and contact_info.get('title') != 'GTM/Marketing Lead' else 'Co-founder',
             contact_linkedin=contact_info.get('linkedin') if contact_info.get('linkedin') and contact_info.get('linkedin') != 'Not listed' else f"https://linkedin.com/company/{clean_name}",
             contact_email=contact_info.get('email') if contact_info.get('email') else f"hello@{clean_name}.com",
-            contact_phone=contact_info.get('phone') if contact_info.get('phone') and contact_info.get('phone') != 'Not found' else '+1 (650) 456-7890',
+            contact_phone=contact_info.get('phone') if contact_info.get('phone') and contact_info.get('phone') not in ['Not found', '+1 (650) 456-7890'] else '',
             funding=firmographics.get('funding') if firmographics.get('funding') and firmographics.get('funding') != 'Unknown / Seed' else 'Seed - YC-backed',
             twitter_handle=clean_name
         )
@@ -133,14 +133,14 @@ def generate_personalized_pitch(
         "their point of contact, and their recent tweets to write a highly tailored pitch recommendation, resolve/complete all missing contact details, and evaluate their "
         "lead score out of 10.\n\n"
         "CRITICAL INSTRUCTION FOR MISSING DATA RESOLUTION:\n"
-        "You must make every effort to resolve/guess realistic, professional contact person's name, title, LinkedIn, email, phone, funding status, and Twitter/X handle. "
-        "If they are missing or contain 'Not found', 'Not listed', or 'Unknown', do NOT use placeholder text or report them as missing. "
+        "You must make every effort to resolve/guess realistic, professional contact person's name, title, LinkedIn, email, funding status, and Twitter/X handle. "
+        "If they are missing or contain 'Not found', 'Not listed', or 'Unknown', do NOT use placeholder text or report them as missing (except for phone number). "
         "Instead, leverage the landing page markdown, founder backgrounds, or your internal intelligence of the startup ecosystem to fill them. "
         "For example:\n"
         "- If contact name is missing, search/guess the name of a real founder or key executive of this company (e.g. 'Jane Doe').\n"
         "- If email is missing, infer a professional email (e.g., firstname@domain.com or hello@domain.com).\n"
         "- If LinkedIn/Twitter handles are missing, construct a highly plausible profile URL or handle.\n"
-        "- If phone is missing, output a plausible corporate phone number.\n"
+        "- If phone is missing, output an empty string.\n"
         "- If funding status is missing, provide a realistic funding estimate based on crunchbase snippets or startup stage (e.g. 'Seed - $1.5M' or 'Bootstrapped').\n\n"
         "Professional Lead Scoring Criteria (decomposed dimensions, each scored 1-10):\n"
         "1. Audience Alignment Score (1-10): How well does their target customer base align with software engineers, developer managers, data scientists, or technical founders? (10 = sells directly to developers, 1 = sells to non-tech retail consumers).\n"
@@ -206,7 +206,7 @@ def generate_personalized_pitch(
             contact_title=contact_info.get('title') if contact_info.get('title') and contact_info.get('title') != 'GTM/Marketing Lead' else 'Co-founder',
             contact_linkedin=contact_info.get('linkedin') if contact_info.get('linkedin') and contact_info.get('linkedin') != 'Not listed' else f"https://linkedin.com/company/{clean_name}",
             contact_email=contact_info.get('email') if contact_info.get('email') else f"hello@{clean_name}.com",
-            contact_phone=contact_info.get('phone') if contact_info.get('phone') and contact_info.get('phone') != 'Not found' else '+1 (650) 456-7890',
+            contact_phone=contact_info.get('phone') if contact_info.get('phone') and contact_info.get('phone') not in ['Not found', '+1 (650) 456-7890'] else '',
             funding=firmographics.get('funding') if firmographics.get('funding') and firmographics.get('funding') != 'Unknown / Seed' else 'Seed - YC-backed',
             twitter_handle=clean_name
         )
