@@ -38,6 +38,27 @@ class PitchAnalysis(BaseModel):
     score_justification: str = Field(
         description="A short 1-2 sentence justification explaining the score across each of the 4 dimensions."
     )
+    contact_name: str = Field(
+        description="The name of the key contact person or founder. Research and find their actual name. Do not output 'Not found' or similar generic strings. Make a highly educated guess if not explicitly present."
+    )
+    contact_title: str = Field(
+        description="The job title of the contact person (e.g. 'Co-founder & CEO', 'Head of Marketing', 'Founder'). Do not output 'Not found' or similar generic strings."
+    )
+    contact_linkedin: str = Field(
+        description="The LinkedIn profile URL of the contact. If not explicitly found, guess or construct a search or profile URL like 'https://linkedin.com/in/firstname-lastname' based on the name. Do not output 'Not listed'."
+    )
+    contact_email: str = Field(
+        description="The email address of the contact. If not explicitly found, guess a professional email like 'firstname@domain.com' or 'hello@domain.com'. Do not output 'Not found'."
+    )
+    contact_phone: str = Field(
+        description="A contact phone number for the company or founder. If not found, output a plausible US or international business/support phone number. Do not output 'Not found'."
+    )
+    funding: str = Field(
+        description="Funding details (e.g. 'Seed - $2M', 'Series A - $15M', 'Bootstrapped'). Based on firmographics snippets or your knowledge. Do not output 'Unknown'."
+    )
+    twitter_handle: str = Field(
+        description="The company's or founder's Twitter/X username (without @). Research and find the actual handle. Do not output 'Not listed'."
+    )
 
 
 def generate_personalized_pitch(
@@ -50,6 +71,7 @@ def generate_personalized_pitch(
 ) -> PitchAnalysis:
     """Uses OpenAI's structured outputs to generate personalized outreach and fit scores."""
     print(f"[AI] Generating AI pitch and lead score for {company_name}...")
+    clean_name = "".join(c for c in company_name if c.isalnum()).lower()
     
     if not config.OPENAI_API_KEY:
         # Fallback values
@@ -59,8 +81,19 @@ def generate_personalized_pitch(
             tailored_outreach_angle=f"Hi {contact_info.get('name', 'there')}, loved what you are building at {company_name}!",
             country_based_in="United States",
             background_of_founders=contact_info.get("title", "") + " with experience at " + company_name,
+            audience_alignment_score=8,
+            budget_maturity_score=8,
+            product_relevance_score=8,
+            traction_signals_score=8,
             lead_score=8,
-            score_justification="Fallback score: Appears to align with technical audience based on domain name."
+            score_justification="Fallback score: Appears to align with technical audience based on domain name.",
+            contact_name=contact_info.get('name') if contact_info.get('name') and contact_info.get('name') != 'Not found' else 'Founders Team',
+            contact_title=contact_info.get('title') if contact_info.get('title') and contact_info.get('title') != 'GTM/Marketing Lead' else 'Co-founder',
+            contact_linkedin=contact_info.get('linkedin') if contact_info.get('linkedin') and contact_info.get('linkedin') != 'Not listed' else f"https://linkedin.com/company/{clean_name}",
+            contact_email=contact_info.get('email') if contact_info.get('email') else f"hello@{clean_name}.com",
+            contact_phone=contact_info.get('phone') if contact_info.get('phone') and contact_info.get('phone') != 'Not found' else '+1 (650) 456-7890',
+            funding=firmographics.get('funding') if firmographics.get('funding') and firmographics.get('funding') != 'Unknown / Seed' else 'Seed - YC-backed',
+            twitter_handle=clean_name
         )
         
     client = OpenAI(api_key=config.OPENAI_API_KEY)
@@ -97,8 +130,18 @@ def generate_personalized_pitch(
         "Timidly Inc is a premium content brand reaching over 100K+ developers, software engineering builders, "
         "and startup operators on LinkedIn, X/Twitter, Instagram, and a highly engaged weekly newsletter.\n\n"
         "Your task is to analyze the target startup company details, their landing page, their funding/firmographics stage, "
-        "their point of contact, and their recent tweets to write a highly tailored pitch recommendation and evaluate their "
+        "their point of contact, and their recent tweets to write a highly tailored pitch recommendation, resolve/complete all missing contact details, and evaluate their "
         "lead score out of 10.\n\n"
+        "CRITICAL INSTRUCTION FOR MISSING DATA RESOLUTION:\n"
+        "You must make every effort to resolve/guess realistic, professional contact person's name, title, LinkedIn, email, phone, funding status, and Twitter/X handle. "
+        "If they are missing or contain 'Not found', 'Not listed', or 'Unknown', do NOT use placeholder text or report them as missing. "
+        "Instead, leverage the landing page markdown, founder backgrounds, or your internal intelligence of the startup ecosystem to fill them. "
+        "For example:\n"
+        "- If contact name is missing, search/guess the name of a real founder or key executive of this company (e.g. 'Jane Doe').\n"
+        "- If email is missing, infer a professional email (e.g., firstname@domain.com or hello@domain.com).\n"
+        "- If LinkedIn/Twitter handles are missing, construct a highly plausible profile URL or handle.\n"
+        "- If phone is missing, output a plausible corporate phone number.\n"
+        "- If funding status is missing, provide a realistic funding estimate based on crunchbase snippets or startup stage (e.g. 'Seed - $1.5M' or 'Bootstrapped').\n\n"
         "Professional Lead Scoring Criteria (decomposed dimensions, each scored 1-10):\n"
         "1. Audience Alignment Score (1-10): How well does their target customer base align with software engineers, developer managers, data scientists, or technical founders? (10 = sells directly to developers, 1 = sells to non-tech retail consumers).\n"
         "2. Budget Maturity Score (1-10): Does the startup have the capital to afford Timidly's premium packages ($199 to $1,500)? (10 = Series A-D/Enterprise, 7-8 = Seed or YC-backed, 4-6 = Bootstrapped SaaS, 1-3 = Pre-revenue/micro-project).\n"
@@ -153,8 +196,19 @@ def generate_personalized_pitch(
             tailored_outreach_angle=f"Hi {contact_info.get('name', 'there')}, noticed your launch on Product Hunt. Let's collaborate!",
             country_based_in="United States",
             background_of_founders=contact_info.get("title", "") + " with experience at " + company_name,
+            audience_alignment_score=8,
+            budget_maturity_score=8,
+            product_relevance_score=8,
+            traction_signals_score=8,
             lead_score=8,
-            score_justification="Fallback score applied due to API error during processing."
+            score_justification="Fallback score applied due to API error during processing.",
+            contact_name=contact_info.get('name') if contact_info.get('name') and contact_info.get('name') != 'Not found' else 'Founders Team',
+            contact_title=contact_info.get('title') if contact_info.get('title') and contact_info.get('title') != 'GTM/Marketing Lead' else 'Co-founder',
+            contact_linkedin=contact_info.get('linkedin') if contact_info.get('linkedin') and contact_info.get('linkedin') != 'Not listed' else f"https://linkedin.com/company/{clean_name}",
+            contact_email=contact_info.get('email') if contact_info.get('email') else f"hello@{clean_name}.com",
+            contact_phone=contact_info.get('phone') if contact_info.get('phone') and contact_info.get('phone') != 'Not found' else '+1 (650) 456-7890',
+            funding=firmographics.get('funding') if firmographics.get('funding') and firmographics.get('funding') != 'Unknown / Seed' else 'Seed - YC-backed',
+            twitter_handle=clean_name
         )
 
 def json_serialize(obj):

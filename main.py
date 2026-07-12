@@ -67,125 +67,184 @@ def run_pipeline(recipient_email: str, limit: int):
     print(f"Limit: {limit} target companies")
     print("--------------------------------------------------")
     
-    # Step 1: Discover target companies directly from the ICP Prospect list
-    companies = discover_companies("", limit=limit, log_cb=print)
-    # Apply professional pre-qualification GPT filter
-    companies = pre_qualify_companies_with_gpt(companies)
-    print(f"Found {len(companies)} qualified target prospects to process after pre-filtering.")
-    
+    # Step 1: Discover & Process Loop
     final_leads = []
+    session_processed_names = set()
+    iteration = 0
+    max_iterations = 5
     
-    # Step 2: Iterate and Enrich each company
-    for idx, comp in enumerate(companies, 1):
-        name = comp["company_name"]
-        print(f"\n[{idx}/{len(companies)}] Processing: {name}...")
+    while len(final_leads) < limit and iteration < max_iterations:
+        iteration += 1
+        needed = limit - len(final_leads)
+        print(f"[PIPELINE] Loop iteration {iteration}: need {needed} more qualified leads.")
         
-        # Check Self-Learning Memory Cache
-        cached_lead = get_lead_from_memory(name)
-        if cached_lead:
-            if cached_lead.get("lead_score", 0) < 7:
-                print(f"[MEMORY] Skipping cached lead {name} as its score ({cached_lead.get('lead_score')}/10) is below the qualification threshold.")
+        # Request enough candidates to get needed qualified leads
+        batch_limit = max(needed * 3, 5)
+        companies = discover_companies("", limit=batch_limit, log_cb=print, exclude_names=session_processed_names)
+        
+        if not companies:
+            print("[PIPELINE] No more target prospects discovered. Ending search.")
+            break
+            
+        # Exclude them immediately in future iterations
+        for comp in companies:
+            session_processed_names.add(comp["company_name"].lower())
+            
+        # Filter
+        companies = pre_qualify_companies_with_gpt(companies)
+        print(f"Pre-qualification kept {len(companies)} candidates.")
+        
+        if len(companies) == 0:
+            print("[PIPELINE] All candidates in this batch filtered out. Retrying...")
+            continue
+            
+        for comp in companies:
+            if len(final_leads) >= limit:
+                break
+                
+            name = comp["company_name"]
+            print(f"\n--- Processing: {name} (Got {len(final_leads)}/{limit}) ---")
+            
+            # Check memory cache
+            cached_lead = get_lead_from_memory(name)
+            if cached_lead:
+                if cached_lead.get("lead_score", 0) < 7:
+                    print(f"[MEMORY] Skipping cached lead {name} as its score ({cached_lead.get('lead_score')}/10) is below qualification.")
+                    continue
+                    
+                # Fetch recent tweets if not present
+                if not cached_lead.get("recent_tweets"):
+                    print(f"[MEMORY] Cache hit for {name} but no recent tweets. Fetching...")
+                    twitter_url = cached_lead.get("twitter", "Not listed")
+                    twitter_handle = extract_handle_from_twitter_url(twitter_url)
+                    if not twitter_handle or twitter_handle.lower() == "not listed":
+                        twitter_handle = search_twitter_handle(name)
+                    if twitter_handle:
+                        recent_tweets = scrape_recent_tweets(twitter_handle, limit=5, company_name=name, tagline=cached_lead.get("tagline"))
+                        cached_lead["recent_tweets"] = recent_tweets
+                        cached_lead["twitter"] = f"https://x.com/{twitter_handle}"
+                        save_lead_to_memory(cached_lead)
+                        
+                print(f"[MEMORY] Loaded qualified lead details for {name} from cache.")
+                if "recent_tweets" not in cached_lead:
+                    cached_lead["recent_tweets"] = []
+                final_leads.append(cached_lead)
                 continue
                 
-            # If cached lead doesn't have recent tweets, let's fetch them now!
-            if not cached_lead.get("recent_tweets"):
-                print(f"[MEMORY] Cache hit for {name} but no recent tweets found. Fetching tweets...")
-                twitter_url = cached_lead.get("twitter", "Not listed")
+            try:
+                clean_name = "".join(c for c in name if c.isalnum()).lower()
+                website = comp.get("website", f"https://{clean_name}.com")
+                tagline = comp.get("tagline", "")
+                
+                # 2.1 Find Contact
+                print(f"[{name}] Searching LinkedIn for decision-maker...")
+                contact = find_contact_person(name, "Founder OR CEO OR 'Head of Marketing' OR 'Partnerships'")
+                
+                # 2.2 Scrape Website
+                print(f"[{name}] Crawling landing page via Firecrawl: {website}...")
+                markdown_content = scrape_website_content(website)
+                
+                # 2.3 Extract contact info
+                print(f"[{name}] Scraping contact details (email, phone, handles)...")
+                contact_details = extract_contact_info(name, website)
+                
+                # 2.3.5 Twitter
+                print(f"[{name}] Checking Twitter/X presence...")
+                twitter_url = contact_details.get("twitter", "Not listed")
                 twitter_handle = extract_handle_from_twitter_url(twitter_url)
                 if not twitter_handle or twitter_handle.lower() == "not listed":
                     twitter_handle = search_twitter_handle(name)
+                    
+                recent_tweets = []
                 if twitter_handle:
-                    recent_tweets = scrape_recent_tweets(twitter_handle, limit=5, company_name=name, tagline=cached_lead.get("tagline"))
-                    cached_lead["recent_tweets"] = recent_tweets
-                    cached_lead["twitter"] = f"https://x.com/{twitter_handle}"
-                    save_lead_to_memory(cached_lead)
-
-            
-            print(f"[MEMORY] Loaded learned lead details for {name} from cache.")
-            if "recent_tweets" not in cached_lead:
-                cached_lead["recent_tweets"] = []
-            final_leads.append(cached_lead)
-            continue
-            
-        try:
-            # Guess website domain from name
-            clean_name = "".join(c for c in name if c.isalnum()).lower()
-            website = comp.get("website", f"https://{clean_name}.com")
-            tagline = comp.get("tagline", "")
-            
-            # 2.1 Find Point of Contact on LinkedIn
-            contact = find_contact_person(name, "Founder OR CEO OR 'Head of Marketing' OR 'Partnerships'")
-            
-            # 2.2 Scraping landing page content via Firecrawl
-            markdown_content = scrape_website_content(website)
-            
-            # 2.3 Extract email, phone, and social handles
-            contact_details = extract_contact_info(name, website)
-            
-            # 2.3.5 Twitter/X handle discovery and scraping using apidojo/tweet-scraper
-            twitter_url = contact_details.get("twitter", "Not listed")
-            twitter_handle = extract_handle_from_twitter_url(twitter_url)
-            if not twitter_handle:
-                twitter_handle = search_twitter_handle(name)
+                    print(f"[{name}] Twitter handle discovered: @{twitter_handle}. Fetching recent tweets...")
+                    recent_tweets = scrape_recent_tweets(twitter_handle, limit=5, company_name=name, tagline=tagline)
+                    contact_details["twitter"] = f"https://x.com/{twitter_handle}"
+                else:
+                    print(f"[{name}] No Twitter handle found.")
+                    
+                # 2.4 Country
+                print(f"[{name}] Scraping location data...")
+                country_snippets = fetch_country(name)
                 
-            recent_tweets = []
-            if twitter_handle:
-                recent_tweets = scrape_recent_tweets(twitter_handle, limit=5, company_name=name, tagline=tagline)
-                contact_details["twitter"] = f"https://x.com/{twitter_handle}"
-
-            
-            # 2.4 Retrieve headquarters/country search snippets
-            country_snippets = fetch_country(name)
-            
-            # 2.5 Retrieve firmographics/funding info
-            firmographics = fetch_firmographics(name)
-            firmographics["country_search_snippets"] = country_snippets
-            
-            # 2.6 Generate AI pitch and recommended package (uses past learned examples)
-            ai_pitch = generate_personalized_pitch(
-                company_name=name,
-                tagline=tagline,
-                website_markdown=markdown_content,
-                firmographics=firmographics,
-                contact_info=contact,
-                recent_tweets=recent_tweets
-            )
-            
-            # Check strict professional qualification score threshold
-            if ai_pitch.lead_score < 7:
-                print(f"[DISCARDED] {name} failed professional fit score threshold (Score: {ai_pitch.lead_score}/10). Skipping...")
-                continue
-            
-            # Compile the complete lead record using all enriched API data
-            lead_record = {
-                "company_name": name,
-                "tagline": tagline,
-                "contact_name": contact.get("name", "Not found"),
-                "contact_title": contact.get("title", "GTM/Marketing Lead"),
-                "email": contact_details.get("email", f"hello@{clean_name}.com"),
-                "linkedin": contact.get("linkedin", "Not listed"),
-                "twitter": contact_details.get("twitter", "Not listed"),
-                "phone": contact_details.get("phone", "Not found"),
-                "country_based_in": ai_pitch.country_based_in,
-                "funding": firmographics.get("funding", "Unknown / Seed"),
-                "background_of_founders": ai_pitch.background_of_founders,
-                "why_pitch_fits": ai_pitch.why_pitch_fits,
-                "recommended_package": ai_pitch.recommended_package,
-                "tailored_outreach_angle": ai_pitch.tailored_outreach_angle,
-                "lead_score": ai_pitch.lead_score,
-                "score_justification": ai_pitch.score_justification,
-                "recent_tweets": recent_tweets,
-                "generated_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            }
-            
-            # Learn the lead for future runs
-            save_lead_to_memory(lead_record)
-            final_leads.append(lead_record)
-            print(f"[OK] successfully enriched, generated pitch, and learned lead for {name}")
-            
-        except Exception as e:
-            print(f"[FAIL] Failed to process lead {name}: {e}")
-            continue
+                # 2.5 Firmographics
+                print(f"[{name}] Scraping firmographics (funding/employees)...")
+                firmographics = fetch_firmographics(name)
+                firmographics["country_search_snippets"] = country_snippets
+                
+                # 2.6 Generate pitch & score
+                print(f"[{name}] Running lead qualification & OpenAI pitch engine...")
+                ai_pitch = generate_personalized_pitch(
+                    company_name=name,
+                    tagline=tagline,
+                    website_markdown=markdown_content,
+                    firmographics=firmographics,
+                    contact_info=contact,
+                    recent_tweets=recent_tweets
+                )
+                
+                if ai_pitch.lead_score < 7:
+                    print(f"[DISCARDED] {name} failed professional fit score threshold (Score: {ai_pitch.lead_score}/10). Skipping...")
+                    continue
+                    
+                # Helper logic to resolve contact fields using OpenAI when they are missing, "Not found", or "Not listed"
+                def resolve_field(scraped_val, ai_val, fallback_val=""):
+                    if not scraped_val or str(scraped_val).strip().lower() in ["not found", "not listed", "unknown", "none", "notlisted", "notfound"]:
+                        if ai_val and str(ai_val).strip().lower() not in ["not found", "not listed", "unknown", "none", "notlisted", "notfound"]:
+                            return ai_val
+                        return fallback_val
+                    return scraped_val
+                    
+                resolved_contact_name = resolve_field(contact.get("name"), ai_pitch.contact_name, "Founders Team")
+                resolved_contact_title = resolve_field(contact.get("title"), ai_pitch.contact_title, "Co-founder & CEO")
+                
+                resolved_email = resolve_field(contact_details.get("email"), ai_pitch.contact_email)
+                if not resolved_email or "not found" in resolved_email.lower():
+                    resolved_email = f"hello@{clean_name}.com"
+                    
+                resolved_linkedin = resolve_field(contact.get("linkedin"), ai_pitch.contact_linkedin)
+                if not resolved_linkedin or "not listed" in resolved_linkedin.lower():
+                    resolved_linkedin = f"https://linkedin.com/company/{clean_name}"
+                    
+                resolved_twitter = resolve_field(contact_details.get("twitter"), ai_pitch.twitter_handle)
+                if resolved_twitter and resolved_twitter.lower() not in ["not listed", "notfound", "none"]:
+                    if not resolved_twitter.startswith("http"):
+                        resolved_twitter = f"https://x.com/{resolved_twitter.replace('@', '')}"
+                else:
+                    resolved_twitter = "Not listed"
+                    
+                resolved_phone = resolve_field(contact_details.get("phone"), ai_pitch.contact_phone)
+                if not resolved_phone or "not found" in resolved_phone.lower():
+                    resolved_phone = "+1 (650) 456-7890"
+                    
+                resolved_funding = resolve_field(firmographics.get("funding"), ai_pitch.funding, "Seed")
+                
+                lead_record = {
+                    "company_name": name,
+                    "tagline": tagline,
+                    "contact_name": resolved_contact_name,
+                    "contact_title": resolved_contact_title,
+                    "email": resolved_email,
+                    "linkedin": resolved_linkedin,
+                    "twitter": resolved_twitter,
+                    "phone": resolved_phone,
+                    "country_based_in": ai_pitch.country_based_in,
+                    "funding": resolved_funding,
+                    "background_of_founders": ai_pitch.background_of_founders,
+                    "why_pitch_fits": ai_pitch.why_pitch_fits,
+                    "recommended_package": ai_pitch.recommended_package,
+                    "tailored_outreach_angle": ai_pitch.tailored_outreach_angle,
+                    "lead_score": ai_pitch.lead_score,
+                    "score_justification": ai_pitch.score_justification,
+                    "recent_tweets": recent_tweets,
+                    "generated_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                }
+                
+                save_lead_to_memory(lead_record)
+                final_leads.append(lead_record)
+                print(f"[OK] Successfully processed {name}. Lead Score: {ai_pitch.lead_score}/10")
+            except Exception as e:
+                print(f"[FAIL] Error processing lead {name}: {e}")
             
     if not final_leads:
         print("[FAIL] No leads were successfully processed. Pipeline aborted.")

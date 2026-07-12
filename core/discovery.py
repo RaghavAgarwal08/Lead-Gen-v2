@@ -6,7 +6,7 @@ from openai import OpenAI
 from apify_client import ApifyClient
 import config
 
-def discover_companies(query_topic: str, limit: int = 10, log_cb=print) -> List[Dict]:
+def discover_companies(query_topic: str, limit: int = 10, log_cb=print, exclude_names: set = None) -> List[Dict]:
     """
     Primary interface for discovering target companies.
     1. Loads the profile of target companies from the new prospect list.
@@ -14,13 +14,15 @@ def discover_companies(query_topic: str, limit: int = 10, log_cb=print) -> List[
     3. Scrapes Product Hunt & Y Combinator via Apify to find fresh target companies.
     4. Filters out any companies that already exist in the prospect list or learned leads.
     """
+    if exclude_names is None:
+        exclude_names = set()
     log_cb("[SEARCH] Analyzing ICP profile to generate search queries...")
     queries = generate_search_queries_from_profile()
     log_cb(f"[SEARCH] Generated queries: {queries}")
     
     if not config.APIFY_API_TOKEN:
         log_cb("[WARNING] APIFY_API_TOKEN is missing. Activating fail-safe OpenAI brainstorming fallback...")
-        return get_fallback_leads(limit=limit, log_cb=log_cb)
+        return get_fallback_leads(limit=limit, log_cb=log_cb, exclude_names=exclude_names)
         
     client = ApifyClient(config.APIFY_API_TOKEN)
     
@@ -49,7 +51,7 @@ def discover_companies(query_topic: str, limit: int = 10, log_cb=print) -> List[
         dataset_items = client.dataset(run.default_dataset_id).list_items().items
     except Exception as e:
         log_cb(f"[WARNING] Apify discovery search failed: {e} (Account limits may be reached). Activating fail-safe OpenAI brainstorming fallback...")
-        return get_fallback_leads(limit=limit, log_cb=log_cb)
+        return get_fallback_leads(limit=limit, log_cb=log_cb, exclude_names=exclude_names)
         
     discovered_companies = []
     seen_names = set()
@@ -94,8 +96,8 @@ def discover_companies(query_topic: str, limit: int = 10, log_cb=print) -> List[
                 continue
                 
             name_lower = name.lower()
-            if name_lower in seen_names or name_lower in existing_names or name_lower in learned_names:
-                # Skip if already seen, in the profile list, or already learned
+            if name_lower in seen_names or name_lower in existing_names or name_lower in learned_names or name_lower in exclude_names:
+                # Skip if already seen, in the profile list, already learned, or excluded
                 continue
 
                 
@@ -119,7 +121,7 @@ def discover_companies(query_topic: str, limit: int = 10, log_cb=print) -> List[
             
     if not discovered_companies:
         log_cb("[WARNING] No net-new target leads found by scraper. Activating fail-safe OpenAI brainstorming fallback...")
-        return get_fallback_leads(limit=limit, log_cb=log_cb)
+        return get_fallback_leads(limit=limit, log_cb=log_cb, exclude_names=exclude_names)
         
     return discovered_companies
 
@@ -291,16 +293,18 @@ def load_prospects_from_list(limit: int = 10) -> List[Dict]:
         
     return prospects[:limit]
 
-def get_fallback_leads(limit: int = 3, log_cb=print) -> List[Dict]:
+def get_fallback_leads(limit: int = 3, log_cb=print, exclude_names: set = None) -> List[Dict]:
     """
     Fallback mechanism that uses OpenAI to brainstorm fresh, qualified tech startups
     matching the ICP, avoiding any already processed or existing ones.
     """
     log_cb("[FALLBACK] Apify discovery failed or returned empty. Using OpenAI to brainstorm fresh startup leads...")
+    if exclude_names is None:
+        exclude_names = set()
     
     existing_names = get_existing_profile_company_names()
     learned_names = get_learned_company_names()
-    all_seen = existing_names.union(learned_names)
+    all_seen = existing_names.union(learned_names).union(exclude_names)
     
     # Take a sample of existing prospects to show OpenAI the style of companies
     prospects = load_prospects_from_list(10)
