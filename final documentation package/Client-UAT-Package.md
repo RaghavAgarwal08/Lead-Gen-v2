@@ -38,7 +38,7 @@ To execute these test cases:
 The system will be deemed accepted for production sign-off when:
 1.  Access to all API endpoints and dashboard views is blocked unless the correct password is entered.
 2.  The pipeline successfully scrapes targets from Product Hunt or Y Combinator and applies two-stage AI filters.
-3.  Qualified prospects ($\ge 7.0$ score) are displayed in the directory grid, while unqualified prospects are skipped.
+3.  The pipeline attempts to gather high-scoring qualified prospects (>= 7.0 score). If they are insufficient to meet the target count, the best backup candidates (below 7.0) are backfilled to meet the exact lead limit requested, and are displayed in the directory grid.
 4.  All lead details render safely without executing script tags (sanitized against web injections).
 5.  Report downloads (DOCX, CSV, JSON) export correctly with formatted data tables.
 
@@ -145,9 +145,11 @@ The system will be deemed accepted for production sign-off when:
 *   **Steps**:
     1. Log in to the dashboard.
     2. Enter your email address in the configuration field.
-    3. Set the lead limit to `5` and click **Generate Leads**.
-    4. Wait for the logs to declare: `[INFO] Pipeline Completed. Reports sent.`
-    5. Check your email inbox for a message from the platform with the DOCX and CSV attachments.
+    3. Type `5` in the "Number of Leads to Generate" input field and click **Produce Leads**.
+    4. Verify that a confirmation modal displays the count of 5 and the entered email address.
+    5. Click **OK** on the confirmation dialog.
+    6. Wait for the logs to declare: `[INFO] Pipeline Completed. Reports sent.`
+    7. Check your email inbox for a message from the platform with the DOCX and CSV attachments.
 *   **Expected Outcome**: The pipeline runs to completion, displays qualified leads in the grid, and delivers the report files as email attachments.
 
 | Result | Checkbox |

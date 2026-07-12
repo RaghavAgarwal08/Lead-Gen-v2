@@ -61,7 +61,6 @@ const pageDesc = document.getElementById('page-desc');
 const systemStatusDot = document.getElementById('system-status-dot');
 const systemStatusLabel = document.getElementById('system-status-label');
 
-const limitSlider = document.getElementById('limit-slider');
 const limitInput = document.getElementById('limit-input');
 const emailInput = document.getElementById('email-input');
 const pipelineForm = document.getElementById('pipeline-form');
@@ -196,16 +195,15 @@ function switchTab(tabId) {
 
 // Form Syncing & Controls
 function setupFormControls() {
-    limitSlider.addEventListener('input', (e) => {
-        limitInput.value = e.target.value;
-    });
-
     limitInput.addEventListener('input', (e) => {
         let val = parseInt(e.target.value);
-        if (isNaN(val)) val = 5;
-        if (val < 1) val = 1;
-        if (val > 15) val = 15;
-        limitSlider.value = val;
+        if (isNaN(val)) return;
+        if (val > 50) {
+            alert("Sorry, the limit is 50.");
+            e.target.value = 50;
+        } else if (val < 1) {
+            e.target.value = 1;
+        }
     });
 
     pipelineForm.addEventListener('submit', async (e) => {
@@ -214,7 +212,21 @@ function setupFormControls() {
         if (state.pipelineStatus.is_running) return;
 
         const limit = parseInt(limitInput.value);
+        if (isNaN(limit) || limit < 1) {
+            alert('Please enter a valid number of leads (at least 1).');
+            return;
+        }
+        if (limit > 50) {
+            alert('Sorry, the limit is 50.');
+            return;
+        }
         const email = emailInput.value.trim();
+
+        const emailConfirmText = email ? `\nEmail Report Recipient: ${email}` : '\nEmail Report Recipient: (none - left blank)';
+        const confirmed = confirm(`Are you sure you want to produce exactly ${limit} leads?${emailConfirmText}`);
+        if (!confirmed) {
+            return;
+        }
 
         try {
             const res = await fetch('/api/generate', {

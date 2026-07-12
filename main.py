@@ -69,6 +69,7 @@ def run_pipeline(recipient_email: str, limit: int):
     
     # Step 1: Discover & Process Loop
     final_leads = []
+    backup_leads = []
     session_processed_names = set()
     iteration = 0
     max_iterations = 5
@@ -183,10 +184,6 @@ def run_pipeline(recipient_email: str, limit: int):
                     recent_tweets=recent_tweets
                 )
                 
-                if ai_pitch.lead_score < 7:
-                    print(f"[DISCARDED] {name} failed professional fit score threshold (Score: {ai_pitch.lead_score}/10). Skipping...")
-                    continue
-                    
                 # Helper logic to resolve contact fields using OpenAI when they are missing, "Not found", or "Not listed"
                 def resolve_field(scraped_val, ai_val, fallback_val=""):
                     if not scraped_val or str(scraped_val).strip().lower() in ["not found", "not listed", "unknown", "none", "notlisted", "notfound"]:
@@ -240,11 +237,26 @@ def run_pipeline(recipient_email: str, limit: int):
                     "generated_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                 }
                 
+                if ai_pitch.lead_score < 7:
+                    print(f"[PIPELINE] Lead {name} has score {ai_pitch.lead_score}/10 (below threshold of 7). Storing in backup list.")
+                    backup_leads.append(lead_record)
+                    continue
+                    
                 save_lead_to_memory(lead_record)
                 final_leads.append(lead_record)
                 print(f"[OK] Successfully processed {name}. Lead Score: {ai_pitch.lead_score}/10")
             except Exception as e:
                 print(f"[FAIL] Error processing lead {name}: {e}")
+                
+    # Backfill if we didn't reach the target count with qualified leads
+    if len(final_leads) < limit and backup_leads:
+        print(f"[PIPELINE] Could not find enough qualified leads (score >= 7). Backfilling from the best backup candidates...")
+        backup_leads.sort(key=lambda x: x["lead_score"], reverse=True)
+        needed = limit - len(final_leads)
+        for b_lead in backup_leads[:needed]:
+            save_lead_to_memory(b_lead)
+            final_leads.append(b_lead)
+            print(f"[BACKFILL] Backfilled candidate {b_lead['company_name']} with score {b_lead['lead_score']}/10.")
             
     if not final_leads:
         print("[FAIL] No leads were successfully processed. Pipeline aborted.")
@@ -286,10 +298,16 @@ def main():
             
     limit = args.limit
     if not limit:
-        limit_str = input("How many leads do you want to generate? ").strip()
-        while not limit_str.isdigit():
-            limit_str = input("Please enter a valid number: ").strip()
+        limit_str = input("How many leads do you want to generate (max 50)? ").strip()
+        while not limit_str.isdigit() or int(limit_str) < 1 or int(limit_str) > 50:
+            if limit_str.isdigit() and int(limit_str) > 50:
+                print("Sorry, the limit is 50.")
+            limit_str = input("Please enter a valid number (1-50): ").strip()
         limit = int(limit_str)
+    else:
+        if limit < 1 or limit > 50:
+            print("Sorry, the limit is 50. Setting limit to 50.")
+            limit = 50
         
     run_pipeline(email, limit)
 

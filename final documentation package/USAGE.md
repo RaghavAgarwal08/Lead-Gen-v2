@@ -141,7 +141,7 @@ python main.py
 You will be prompted:
 ```
 Enter the email address to send the leads report to: your-email@gmail.com
-How many leads do you want to generate? 5
+How many leads do you want to generate (max 50)? 5
 ```
 
 ### Command-Line Mode

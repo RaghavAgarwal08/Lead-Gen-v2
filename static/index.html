@@ -97,11 +97,10 @@
                             <form id="pipeline-form" class="pipeline-form">
                                 <div class="form-group">
                                     <label for="limit-input">Number of Leads to Generate</label>
-                                    <div class="range-container">
-                                        <input type="range" id="limit-slider" min="1" max="15" value="5" class="slider">
-                                        <input type="number" id="limit-input" min="1" max="15" value="5" class="number-input">
+                                    <div class="range-container" style="display: flex; gap: 10px;">
+                                        <input type="number" id="limit-input" min="1" max="50" value="5" class="number-input" style="width: 100%; max-width: 100px;">
                                     </div>
-                                    <span class="field-hint">Max recommended per run: 10 due to API scraping speeds.</span>
+                                    <span class="field-hint">Maximum limit is 50 leads per run.</span>
                                 </div>
 
                                 <div class="form-group">

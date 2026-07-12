@@ -108,6 +108,7 @@ def run_bg_pipeline(limit: int, email: str):
     try:
         # Step 1: Discover & Process Loop
         final_leads = []
+        backup_leads = []
         session_processed_names = set()
         iteration = 0
         max_iterations = 5
@@ -237,10 +238,6 @@ def run_bg_pipeline(limit: int, email: str):
                         recent_tweets=recent_tweets
                     )
                     
-                    if ai_pitch.lead_score < 7:
-                        manager.log(f"[DISCARDED] {name} failed professional fit score threshold (Score: {ai_pitch.lead_score}/10). Skipping...")
-                        continue
-                        
                     # Helper logic to resolve contact fields using OpenAI when they are missing, "Not found", or "Not listed"
                     def resolve_field(scraped_val, ai_val, fallback_val=""):
                         if not scraped_val or str(scraped_val).strip().lower() in ["not found", "not listed", "unknown", "none", "notlisted", "notfound"]:
@@ -294,6 +291,11 @@ def run_bg_pipeline(limit: int, email: str):
                         "generated_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                     }
                     
+                    if ai_pitch.lead_score < 7:
+                        manager.log(f"[PIPELINE] Lead {name} has score {ai_pitch.lead_score}/10 (below threshold of 7). Storing in backup list.")
+                        backup_leads.append(lead_record)
+                        continue
+                        
                     save_lead_to_memory(lead_record)
                     final_leads.append(lead_record)
                     with manager.lock:
@@ -302,6 +304,19 @@ def run_bg_pipeline(limit: int, email: str):
                     manager.log(f"[OK] Successfully processed {name}. Lead Score: {ai_pitch.lead_score}/10")
                 except Exception as e:
                     manager.log(f"[FAIL] Error processing lead {name}: {e}")
+                    
+        # Backfill if we didn't reach the target count with qualified leads
+        if len(final_leads) < limit and backup_leads:
+            manager.log(f"[PIPELINE] Could not find enough qualified leads (score >= 7). Backfilling from the best backup candidates...")
+            backup_leads.sort(key=lambda x: x["lead_score"], reverse=True)
+            needed = limit - len(final_leads)
+            for b_lead in backup_leads[:needed]:
+                save_lead_to_memory(b_lead)
+                final_leads.append(b_lead)
+                with manager.lock:
+                    manager.leads = final_leads
+                    manager.progress = int(10 + (len(final_leads) / limit) * 70)
+                manager.log(f"[BACKFILL] Backfilled candidate {b_lead['company_name']} with score {b_lead['lead_score']}/10.")
                 
         if not final_leads:
             manager.log("[FAIL] No leads successfully processed.")
@@ -368,6 +383,8 @@ class StartPipelineRequest(BaseModel):
 @app.post("/api/generate", dependencies=[Depends(verify_password)])
 def start_generation(req: StartPipelineRequest, background_tasks: BackgroundTasks):
     global manager
+    if req.limit < 1 or req.limit > 50:
+        raise HTTPException(status_code=400, detail="Limit must be between 1 and 50.")
     with manager.lock:
         if manager.is_running:
             raise HTTPException(status_code=400, detail="Pipeline is already running.")

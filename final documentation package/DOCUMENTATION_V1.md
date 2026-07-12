@@ -34,9 +34,9 @@ The pipeline automates this entire lifecycle. Within minutes, a single run disco
 
 ### Current Capabilities
 *   **ICP-Driven Target Discovery**: OpenAI GPT-4o-mini analyzes the existing prospect list (`extracted_prospects.md`) to understand the Ideal Customer Profile. It then generates targeted, context-aware Google Search queries targeting `site:producthunt.com/posts/` and `site:ycombinator.com/companies`.
-*   **Two-Stage Qualification Pipeline**:
+*   **Two-Stage Qualification & Backup Backfill Pipeline**:
     *   *Stage 1: AI-Driven Pre-Filter*: Instantly evaluates names and taglines using OpenAI to filter out unqualified targets (agencies, consultancies, local retail, low-tech B2C apps) before executing expensive API crawls.
-    *   *Stage 2: Fit Scoring Model*: Crawls, enriches, and rates prospects out of 10. Startups scoring below $7.0$ are automatically filtered out.
+    *   *Stage 2: Fit Scoring Model*: Crawls, enriches, and rates prospects out of 10. Startups scoring $\ge 7.0$ are treated as fully qualified. If the total number of qualified leads is less than the requested limit, the pipeline automatically backfills the remaining slots from a backup list of unqualified candidates, sorted by lead score descending, to guarantee the exact target lead count is delivered.
 *   **Multi-Source Firmographic Enrichment**: Crawls funding stages, valuation details, country location, and employee headcount estimates.
 *   **Landing Page Crawling & Scraping**: Utilizes Firecrawl API to extract raw HTML landing page text and clean it into developer-friendly Markdown, which acts as direct context for AI pitch copy generation.
 *   **Decision-Maker Contact Person Lookup**: Automatically searches Google/LinkedIn to identify target decision-makers (Founders, CEOs, Heads of Marketing, Partnerships Leads) along with their names, roles, and LinkedIn URLs.
@@ -81,9 +81,10 @@ To run the pipeline, ensure the following keys are set in your environment (or i
 #### 1. Via the Web Dashboard
 1. Open the dashboard homepage.
 2. Enter the **Email Address** where the reports should be delivered.
-3. Enter the **Lead Count Limit** (the number of net-new prospects you want to generate).
-4. Click the **Generate Leads** button.
-5. Watch the real-time log stream and progress bar updates.
+3. Type the **Lead Count Limit** in the input field (up to a maximum of 50).
+4. Click the **Produce Leads** button.
+5. Confirm the settings (lead count and email recipient address) in the verification popup modal that appears.
+6. Once you click OK, the pipeline starts. Watch the real-time log stream and progress bar updates.
 
 #### 2. Via the Command Line Interface (CLI)
 Run the script interactively:

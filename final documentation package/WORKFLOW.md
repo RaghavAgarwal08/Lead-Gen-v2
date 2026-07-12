@@ -179,13 +179,24 @@ This is the core intelligence layer. The system prompt describes Timidly Inc's a
 | `tailored_outreach_angle` | `str` | Personalized opening message for the decision-maker |
 | `country_based_in` | `str` | Inferred headquarters country |
 | `background_of_founders` | `str` | Synthesized founder/contact background |
+| `contact_name` | `str` | Name of the key contact person or founder |
+| `contact_title` | `str` | Job title of the contact person |
+| `contact_linkedin` | `str` | LinkedIn profile URL of the contact |
+| `contact_email` | `str` | Email address of the contact |
+| `contact_phone` | `str` | Contact phone number for the company/founder |
+| `funding` | `str` | Funding details and raised stage |
+| `twitter_handle` | `str` | Company's or founder's Twitter/X username |
 
-### Stage 10 — Memory Storage
+### Stage 10 — Memory Storage & Backfill
 
-**Module:** `main.py` → `save_lead_to_memory()`  
+**Module:** `main.py` → `save_lead_to_memory()` & backfill logic  
 **Storage:** `learned_leads.json`
 
-Every successfully processed lead is immediately appended to the local JSON database. If the company already exists (from a re-run), it is updated in place. This file serves three purposes:
+Every successfully processed qualified lead (score $\ge 7$) is immediately appended to the local JSON database and final report. If the company already exists, it is updated.
+
+If the requested lead limit has not been reached after discovery runs, the pipeline will sort the accumulated backup list of unqualified candidates (score $< 7$) by lead score descending and backfill the remaining slots to guarantee the exact target lead count is met. Backfilled leads are also stored in memory and exported.
+
+The memory file serves three purposes:
 1. **Few-shot training data** for the AI generator (Stage 9)
 2. **Deduplication index** for future discovery runs (Stage 3)
 3. **Instant cache** — if a learned lead is requested again, it is served directly from memory without making any API calls
