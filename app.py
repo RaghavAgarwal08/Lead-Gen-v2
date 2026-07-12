@@ -201,7 +201,7 @@ def run_bg_pipeline(limit: int, email: str):
                     
                     # 2.3 Extract contact info
                     manager.log(f"[{name}] Scraping contact details (email, phone, handles)...")
-                    contact_details = extract_contact_info(name, website)
+                    contact_details = extract_contact_info(name, website, contact.get("name"))
                     
                     # 2.3.5 Twitter
                     manager.log(f"[{name}] Checking Twitter/X presence...")

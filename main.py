@@ -147,7 +147,7 @@ def run_pipeline(recipient_email: str, limit: int):
                 
                 # 2.3 Extract contact info
                 print(f"[{name}] Scraping contact details (email, phone, handles)...")
-                contact_details = extract_contact_info(name, website)
+                contact_details = extract_contact_info(name, website, contact.get("name"))
                 
                 # 2.3.5 Twitter
                 print(f"[{name}] Checking Twitter/X presence...")

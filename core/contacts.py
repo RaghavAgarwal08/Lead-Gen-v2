@@ -111,7 +111,76 @@ def find_phone_number_with_google(company_name: str) -> str:
             
     return "Not found"
 
-def extract_contact_info(company_name: str, domain: str) -> Dict[str, str]:
+def is_generic_email(email: str) -> bool:
+    if not email or "@" not in email:
+        return True
+    prefix = email.split("@")[0].lower()
+    generics = {"info", "support", "sales", "hello", "contact", "admin", "jobs", "careers", "team", "marketing", "media", "press", "office", "help", "billing", "inquiries", "no-reply", "noreply", "privacy", "feedback"}
+    return prefix in generics
+
+def find_email_with_google(company_name: str, contact_name: str, domain: str) -> str:
+    """Searches Google for the email address of a specific contact at the company or a corporate address and extracts it using GPT."""
+    if not config.APIFY_API_TOKEN:
+        return "Not found"
+        
+    client = ApifyClient(config.APIFY_API_TOKEN)
+    base_domain = domain.split('//')[-1].split('www.')[-1].strip('/')
+    
+    # Construct search query
+    if contact_name and contact_name.lower() not in ["not found", "founders team", "decision maker"]:
+        print(f"[EMAIL] Searching Google for email of {contact_name} at {company_name}...")
+        query = f'"{contact_name}" AND "{company_name}" email OR contact OR "@{base_domain}"'
+    else:
+        print(f"[EMAIL] Searching Google for general email of {company_name}...")
+        query = f'"{company_name}" "{base_domain}" contact email OR support email OR "@{base_domain}"'
+        
+    run_input = {
+        "queries": query,
+        "maxPagesPerQuery": 1,
+        "resultsPerPage": 5,
+    }
+    
+    try:
+        run = client.actor("apify/google-search-scraper").call(run_input=run_input)
+        dataset_items = client.dataset(run.default_dataset_id).list_items().items
+    except Exception as e:
+        print(f"[WARNING] Apify email search failed: {e}")
+        return "Not found"
+        
+    snippets = []
+    for item in dataset_items:
+        organic_results = item.get("organicResults", [])
+        for res in organic_results:
+            snippets.append(f"Title: {res.get('title')}\nSnippet: {res.get('snippet')}\n")
+            
+    combined_snippets = "\n".join(snippets)
+    
+    if config.OPENAI_API_KEY and combined_snippets:
+        from openai import OpenAI
+        try:
+            ai_client = OpenAI(api_key=config.OPENAI_API_KEY)
+            prompt = (
+                f"You are a contact extraction assistant. Read these Google search snippets about the company '{company_name}', contact '{contact_name}', and domain '{base_domain}':\n\n"
+                f"{combined_snippets}\n\n"
+                f"Extract the specific email address of {contact_name} or a general corporate/support contact email for the company (e.g., info@{base_domain}, contact@{base_domain}, sales@{base_domain}, or a personal/professional business email like firstname@{base_domain}).\n"
+                "Return ONLY the raw email address found (no explanation, no punctuation, just the email address itself). If no valid email address is explicitly found in the snippets, return 'Not found'."
+            )
+            completion = ai_client.chat.completions.create(
+                model="gpt-4o-mini",
+                messages=[
+                    {"role": "user", "content": prompt}
+                ],
+                temperature=0.0
+            )
+            email_res = completion.choices[0].message.content.strip()
+            if email_res and "@" in email_res and "." in email_res and len(email_res) < 50:
+                return email_res
+        except Exception as e:
+            print(f"[WARNING] AI email extraction failed: {e}")
+            
+    return "Not found"
+
+def extract_contact_info(company_name: str, domain: str, contact_name: str = None) -> Dict[str, str]:
     """
     Extracts emails, phone numbers, and social URLs from the company's website
     using the Apify Contact Info Scraper.
@@ -128,8 +197,8 @@ def extract_contact_info(company_name: str, domain: str) -> Dict[str, str]:
         domain = f"https://{domain}"
         
     if not config.APIFY_API_TOKEN:
-        # Default fallback phone if Apify token missing
-        return {"email": f"hello@{domain.split('//')[-1]}", "phone": "", "twitter": "Not listed"}
+        # Default fallback if Apify token missing
+        return {"email": "Not found", "phone": "", "twitter": "Not listed"}
         
     client = ApifyClient(config.APIFY_API_TOKEN)
     
@@ -139,37 +208,59 @@ def extract_contact_info(company_name: str, domain: str) -> Dict[str, str]:
         "maxPagesPerCrawl": 5
     }
     
-    try:
-        run = client.actor("vdrmota/contact-info-scraper").call(run_input=run_input)
-        dataset_items = client.dataset(run.default_dataset_id).list_items().items
-    except Exception as e:
-        print(f"[WARNING] Apify website scraping failed: {e}")
-        # Guess email as fallback
-        clean_name = re.sub(r'[^a-zA-Z0-9]', '', company_name).lower()
-        return {
-            "email": f"hello@{clean_name}.com",
-            "phone": "",
-            "twitter": "Not listed"
-        }
-        
     emails = []
     phones = []
     twitters = []
     
-    for item in dataset_items:
-        # Extract emails
-        for e in item.get("emails", []):
-            if e not in emails:
-                emails.append(e)
-        # Extract phones
-        for p in item.get("phones", []):
-            if p not in phones:
-                phones.append(p)
-        # Extract twitter links
-        for t in item.get("twitter", []):
-            if t not in twitters:
-                twitters.append(t)
-                
+    try:
+        run = client.actor("vdrmota/contact-info-scraper").call(run_input=run_input)
+        dataset_items = client.dataset(run.default_dataset_id).list_items().items
+        for item in dataset_items:
+            # Extract emails
+            for e in item.get("emails", []):
+                if e not in emails:
+                    emails.append(e)
+            # Extract phones
+            for p in item.get("phones", []):
+                if p not in phones:
+                    phones.append(p)
+            # Extract twitter links
+            for t in item.get("twitter", []):
+                if t not in twitters:
+                    twitters.append(t)
+    except Exception as e:
+        print(f"[WARNING] Apify website scraping failed: {e}")
+        
+    # Resolve email
+    email = None
+    # 1. Prioritize personal emails from scraper first
+    personal_emails = [e for e in emails if not is_generic_email(e)]
+    if personal_emails:
+        email = personal_emails[0]
+        
+    # 2. Try to find a personal/specific email using Google Search
+    if not email:
+        google_email = find_email_with_google(company_name, contact_name, domain)
+        if google_email != "Not found" and not is_generic_email(google_email):
+            email = google_email
+            
+    # 3. Fallback to generic scraped emails (e.g. info@company.com)
+    if not email:
+        generic_emails = [e for e in emails if is_generic_email(e)]
+        if generic_emails:
+            email = generic_emails[0]
+            
+    # 4. Fallback to any Google Search email found (could be general if personal wasn't found)
+    if not email:
+        google_email = find_email_with_google(company_name, contact_name, domain)
+        if google_email != "Not found":
+            email = google_email
+            
+    # 5. Final fallback
+    if not email:
+        email = "Not found"
+        
+    # Resolve phone
     phone = phones[0] if phones else "Not found"
     if phone == "Not found":
         phone = find_phone_number_with_google(company_name)
@@ -179,7 +270,7 @@ def extract_contact_info(company_name: str, domain: str) -> Dict[str, str]:
         phone = ""
         
     return {
-        "email": emails[0] if emails else f"info@{domain.split('//')[-1]}",
+        "email": email,
         "phone": phone,
         "twitter": twitters[0] if twitters else "Not listed"
     }
