@@ -24,8 +24,9 @@ You can launch and operate this application in the cloud using Render:
    - `APIFY_API_TOKEN`
    - `FIRECRAWL_API_KEY`
    - `APP_PASSWORD` (Highly Recommended - secure administrative passkey to lock the dashboard UI)
-   - `SMTP_USER` (Optional - fallback Gmail address for email reports)
-   - `SMTP_PASSWORD` (Optional - Google App Password for email reports)
+   - `RESEND_API_KEY` (Highly Recommended / Required for Render Hosting. Render blocks SMTP ports completely, so you must configure a Resend key to send reports over HTTP.)
+   - `SMTP_USER` (Optional - fallback Gmail address for email reports when running locally)
+   - `SMTP_PASSWORD` (Optional - Google App Password for email reports when running locally)
 5. **Launch**: Render will build the container and deploy it, generating a secure live HTTPS URL. Open this URL to access your dashboard panel.
 
 ---

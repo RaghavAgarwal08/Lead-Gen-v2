@@ -269,44 +269,52 @@
                 <!-- SETTINGS / API CREDENTIALS TAB -->
                 <section class="tab-panel" id="settings-panel">
                     <div class="card p-xl max-w-2xl">
-                        <h2 class="card-title">Local Environment API Integration</h2>
-                        <p class="card-desc">The lead generation tool uses the following API keys configured in the local <code>.env</code> file. Check status below:</p>
+                        <h2 class="card-title">System Credentials Configuration</h2>
+                        <p class="card-desc">Configure your API keys and email credentials. Changes will take effect immediately in memory and will be written to the local <code>.env</code> file.</p>
                         
-                        <div class="api-status-list">
-                            <div class="api-status-item">
-                                <div class="api-name">
-                                    <strong>OpenAI API Key</strong>
-                                    <code>OPENAI_API_KEY</code>
-                                </div>
-                                <div class="api-badge" id="status-openai">Checking...</div>
+                        <form id="settings-form" class="pipeline-form mt-md">
+                            <div class="form-group">
+                                <label for="openai-input">OpenAI API Key (<code>OPENAI_API_KEY</code>)</label>
+                                <input type="password" id="openai-input" class="text-input" placeholder="sk-proj-...">
                             </div>
-                            <div class="api-status-item">
-                                <div class="api-name">
-                                    <strong>Apify Platform Token</strong>
-                                    <code>APIFY_API_TOKEN</code>
-                                </div>
-                                <div class="api-badge" id="status-apify">Checking...</div>
+                            <div class="form-group">
+                                <label for="apify-input">Apify Platform Token (<code>APIFY_API_TOKEN</code>)</label>
+                                <input type="password" id="apify-input" class="text-input" placeholder="apify_api_...">
                             </div>
-                            <div class="api-status-item">
-                                <div class="api-name">
-                                    <strong>Firecrawl Scraper API Key</strong>
-                                    <code>FIRECRAWL_API_KEY</code>
-                                </div>
-                                <div class="api-badge" id="status-firecrawl">Checking...</div>
+                            <div class="form-group">
+                                <label for="firecrawl-input">Firecrawl Scraper API Key (<code>FIRECRAWL_API_KEY</code>)</label>
+                                <input type="password" id="firecrawl-input" class="text-input" placeholder="fc-...">
                             </div>
-                            <div class="api-status-item">
-                                <div class="api-name">
-                                    <strong>SMTP Email Delivery Credentials</strong>
-                                    <code>SMTP_USER & SMTP_PASSWORD</code>
-                                </div>
-                                <div class="api-badge" id="status-smtp">Checking...</div>
+                            <div class="form-group">
+                                <label for="resend-input">Resend API Key (<code>RESEND_API_KEY</code> - Required for Render Hosting)</label>
+                                <input type="password" id="resend-input" class="text-input" placeholder="re_...">
                             </div>
-                        </div>
-
-                        <div class="settings-info-box mt-xl">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
-                            <p>To update credentials, modify the <code>.env</code> file directly in your workspace directory and restart the web server.</p>
-                        </div>
+                            <div class="form-group">
+                                <label for="smtp-host-input">SMTP Host</label>
+                                <input type="text" id="smtp-host-input" class="text-input" placeholder="smtp.gmail.com">
+                            </div>
+                            <div class="form-group" style="display: flex; gap: 1rem;">
+                                <div style="flex: 1;">
+                                    <label for="smtp-port-input">SMTP Port</label>
+                                    <input type="number" id="smtp-port-input" class="text-input" placeholder="587">
+                                </div>
+                                <div style="flex: 2;">
+                                    <label for="smtp-user-input">SMTP User Email</label>
+                                    <input type="email" id="smtp-user-input" class="text-input" placeholder="sales@company.com">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="smtp-pass-input">SMTP Password (App Password)</label>
+                                <input type="password" id="smtp-pass-input" class="text-input" placeholder="••••••••••••••••">
+                            </div>
+                            
+                            <div class="form-actions mt-lg">
+                                <button type="submit" id="save-settings-btn" class="btn btn-primary">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+                                    <span>Save Credentials</span>
+                                </button>
+                            </div>
+                        </form>
                     </div>
 
                     <!-- API Quotas & Usage Card -->

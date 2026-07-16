@@ -211,10 +211,10 @@ The DOCX report is formatted to match the style of the original prospect list: C
 ### Stage 12 — Email Delivery
 
 **Module:** `utils/mailer.py` → `send_leads_report()`  
-**Tool:** Gmail SMTP with STARTTLS  
+**Tool:** Resend HTTP API (Primary / cloud-ready) / Gmail SMTP over SSL/TLS (Local fallback)  
 **Attachments:** DOCX + CSV
 
-The DOCX and CSV files are attached to a plain-text email summarizing the number of leads generated and sent to the recipient address provided at runtime.
+The DOCX and CSV files are attached to a plain-text email summarizing the number of leads generated and sent to the recipient address provided at runtime. The system attempts HTTPS delivery via Resend first to bypass cloud outbound SMTP port blocks, falling back to SMTP STARTTLS over port 587 if the key is not set.
 
 ---
 
@@ -226,7 +226,8 @@ The DOCX and CSV files are attached to a plain-text email summarizing the number
 | **Apify** | `vdrmota/contact-info-scraper` | Email/phone extraction from websites | ~$0.01 |
 | **Firecrawl** | `/v1/scrape` | Website → Markdown conversion | 1 credit per page |
 | **OpenAI** | `gpt-4o-mini` | ICP query generation + pitch generation | ~$0.001–0.005 |
-| **Gmail SMTP** | `smtp.gmail.com:587` | Email delivery | Free |
+| **Resend** | `https://api.resend.com/emails` | Primary HTTP email delivery (Render) | Free (up to 100/day) |
+| **Gmail SMTP** | `smtp.gmail.com:587` | Fallback SMTP email delivery | Free |
 
 **Estimated cost per lead:** $0.03–0.08 (well within Apify's free $5/month tier for small batches).
 

@@ -858,18 +858,46 @@ function escapeHtml(unsafe) {
          .replace(/'/g, "&#039;");
 }
 
-// Check local credentials
-// Check local credentials
+// Check local credentials and populate settings form
 async function checkApiCredentials() {
     try {
         const res = await fetch('/api/config');
         if (!res.ok) return;
         const cfg = await res.json();
 
-        updateBadge('status-openai', cfg.openai);
-        updateBadge('status-apify', cfg.apify);
-        updateBadge('status-firecrawl', cfg.firecrawl);
-        updateBadge('status-smtp', cfg.smtp);
+        // Populate fields
+        const openaiInput = document.getElementById('openai-input');
+        const apifyInput = document.getElementById('apify-input');
+        const firecrawlInput = document.getElementById('firecrawl-input');
+        const resendInput = document.getElementById('resend-input');
+        const smtpHostInput = document.getElementById('smtp-host-input');
+        const smtpPortInput = document.getElementById('smtp-port-input');
+        const smtpUserInput = document.getElementById('smtp-user-input');
+        const smtpPassInput = document.getElementById('smtp-pass-input');
+
+        if (openaiInput) {
+            openaiInput.value = '';
+            openaiInput.placeholder = cfg.openai_val ? cfg.openai_val : 'sk-proj-...';
+        }
+        if (apifyInput) {
+            apifyInput.value = '';
+            apifyInput.placeholder = cfg.apify_val ? cfg.apify_val : 'apify_api_...';
+        }
+        if (firecrawlInput) {
+            firecrawlInput.value = '';
+            firecrawlInput.placeholder = cfg.firecrawl_val ? cfg.firecrawl_val : 'fc-...';
+        }
+        if (resendInput) {
+            resendInput.value = '';
+            resendInput.placeholder = cfg.resend_val ? cfg.resend_val : 're_...';
+        }
+        if (smtpHostInput && cfg.smtp_host) smtpHostInput.value = cfg.smtp_host;
+        if (smtpPortInput && cfg.smtp_port) smtpPortInput.value = cfg.smtp_port;
+        if (smtpUserInput && cfg.smtp_user) smtpUserInput.value = cfg.smtp_user;
+        if (smtpPassInput) {
+            smtpPassInput.value = '';
+            smtpPassInput.placeholder = cfg.smtp_pass_val ? cfg.smtp_pass_val : '••••••••••••••••';
+        }
         
         loadApiUsage(cfg);
     } catch (err) {
@@ -877,17 +905,60 @@ async function checkApiCredentials() {
     }
 }
 
-function updateBadge(id, isConnected) {
-    const el = document.getElementById(id);
-    if (!el) return;
-    if (isConnected) {
-        el.className = 'api-badge connected';
-        el.textContent = 'Active / Connected';
-    } else {
-        el.className = 'api-badge missing';
-        el.textContent = 'Missing Key';
+// Settings Form Submission
+document.addEventListener('DOMContentLoaded', () => {
+    const settingsForm = document.getElementById('settings-form');
+    if (settingsForm) {
+        settingsForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const openai_api_key = document.getElementById('openai-input').value.trim();
+            const apify_api_token = document.getElementById('apify-input').value.trim();
+            const firecrawl_api_key = document.getElementById('firecrawl-input').value.trim();
+            const resend_api_key = document.getElementById('resend-input').value.trim();
+            const smtp_host = document.getElementById('smtp-host-input').value.trim();
+            const smtp_port_val = document.getElementById('smtp-port-input').value.trim();
+            const smtp_user = document.getElementById('smtp-user-input').value.trim();
+            const smtp_password = document.getElementById('smtp-pass-input').value.trim();
+            
+            const payload = {};
+            if (openai_api_key && !openai_api_key.includes('...')) payload.openai_api_key = openai_api_key;
+            if (apify_api_token && !apify_api_token.includes('...')) payload.apify_api_token = apify_api_token;
+            if (firecrawl_api_key && !firecrawl_api_key.includes('...')) payload.firecrawl_api_key = firecrawl_api_key;
+            if (resend_api_key && !resend_api_key.includes('...')) payload.resend_api_key = resend_api_key;
+            if (smtp_host) payload.smtp_host = smtp_host;
+            if (smtp_port_val) payload.smtp_port = parseInt(smtp_port_val);
+            if (smtp_user) payload.smtp_user = smtp_user;
+            if (smtp_password && !smtp_password.includes('...')) payload.smtp_password = smtp_password;
+            
+            try {
+                const btn = document.getElementById('save-settings-btn');
+                btn.disabled = true;
+                btn.querySelector('span').textContent = 'Saving...';
+                
+                const res = await fetch('/api/config', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                
+                if (!res.ok) {
+                    const errData = await res.json();
+                    throw new Error(errData.detail || 'Failed to update credentials');
+                }
+                
+                alert('Credentials updated successfully!');
+                checkApiCredentials();
+            } catch (err) {
+                alert(`Error: ${err.message}`);
+            } finally {
+                const btn = document.getElementById('save-settings-btn');
+                btn.disabled = false;
+                btn.querySelector('span').textContent = 'Save Credentials';
+            }
+        });
     }
-}
+});
 
 // Fetch and load quota/usage limits in settings
 async function loadApiUsage(cfg) {

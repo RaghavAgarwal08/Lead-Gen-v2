@@ -138,6 +138,30 @@ The system will be deemed accepted for production sign-off when:
 
 ---
 
+### Feature 5: Credentials & Settings Configuration Form
+*   **Purpose**: Allows secure updating of environment credentials (API keys, email logins) directly from the browser settings dashboard.
+*   **Preconditions**: Successfully unlocked the dashboard.
+*   **Test Procedure**:
+    1. Click on the **API Credentials** menu item in the sidebar.
+    2. Confirm that the form fields load showing masked placeholders of your active keys (e.g. `sk-proj-...` or `fc-...`).
+    3. Enter a new key (e.g. your `RESEND_API_KEY`) in the Resend API Key field.
+    4. Click **Save Credentials**.
+    5. Verify the confirmation alert: "Credentials updated successfully!"
+*   **Expected Result**: Values are updated in memory immediately and written to your local `.env` file.
+
+| Result | Checkbox |
+| :--- | :--- |
+| **Pass** | ☐ |
+| **Fail** | ☐ |
+| **N/A** | ☐ |
+
+*Comments / Client Feedback*:
+\
+\
+\
+
+---
+
 ## 6. End-to-End Business Workflow Validation
 
 ### Workflow 1: Standard Discovery & Scoring Workflow

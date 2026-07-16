@@ -57,9 +57,9 @@ def send_leads_report(recipient_email: str, docx_path: str, csv_path: str, num_l
                 print(f"[OK] Successfully sent report email via Resend HTTP API to {recipient_email}!")
                 return
             else:
-                print(f"[FAIL] Resend API error (HTTP {r.status_code}): {r.text}")
+                print(f"[FAIL] Resend API error (HTTP {r.status_code}): {r.text}. Attempting fallback to SMTP...")
         except Exception as e:
-            print(f"[WARNING] Resend API call failed: {e}. Falling back to SMTP...")
+            print(f"[WARNING] Resend API call failed: {e}. Attempting fallback to SMTP...")
             
     if not config.SMTP_USER or not config.SMTP_PASSWORD:
         print("[WARNING] SMTP credentials not set in environment. Skipping email sending.")

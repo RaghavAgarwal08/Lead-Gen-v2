@@ -474,14 +474,112 @@ def clear_history():
             raise HTTPException(status_code=500, detail=str(e))
     return {"status": "cleared"}
 
+def mask_key(key: str) -> str:
+    if not key:
+        return ""
+    if len(key) <= 12:
+        return "****"
+    return f"{key[:8]}...{key[-4:]}"
+
 @app.get("/api/config", dependencies=[Depends(verify_password)])
 def get_config_status():
+    resend_key = os.getenv("RESEND_API_KEY")
     return {
         "openai": bool(config.OPENAI_API_KEY),
         "apify": bool(config.APIFY_API_TOKEN),
         "firecrawl": bool(config.FIRECRAWL_API_KEY),
-        "smtp": bool(config.SMTP_USER and config.SMTP_PASSWORD)
+        "smtp": bool(config.SMTP_USER and config.SMTP_PASSWORD),
+        "resend": bool(resend_key),
+        "openai_val": mask_key(config.OPENAI_API_KEY),
+        "apify_val": mask_key(config.APIFY_API_TOKEN),
+        "firecrawl_val": mask_key(config.FIRECRAWL_API_KEY),
+        "resend_val": mask_key(resend_key),
+        "smtp_host": config.SMTP_HOST,
+        "smtp_port": config.SMTP_PORT,
+        "smtp_user": config.SMTP_USER or "",
+        "smtp_pass_val": mask_key(config.SMTP_PASSWORD)
     }
+
+class UpdateConfigRequest(BaseModel):
+    openai_api_key: Optional[str] = None
+    apify_api_token: Optional[str] = None
+    firecrawl_api_key: Optional[str] = None
+    resend_api_key: Optional[str] = None
+    smtp_host: Optional[str] = None
+    smtp_port: Optional[int] = None
+    smtp_user: Optional[str] = None
+    smtp_password: Optional[str] = None
+
+def save_env_keys(keys: dict):
+    lines = []
+    if os.path.exists(".env"):
+        try:
+            with open(".env", "r", encoding="utf-8") as f:
+                lines = f.readlines()
+        except Exception as e:
+            print(f"Error reading .env: {e}")
+            
+    updated_keys = keys.copy()
+    new_lines = []
+    for line in lines:
+        line_stripped = line.strip()
+        if line_stripped.startswith("#") or not line_stripped or "=" not in line_stripped:
+            new_lines.append(line)
+            continue
+        parts = line_stripped.split("=", 1)
+        key_name = parts[0].strip()
+        if key_name in updated_keys:
+            new_lines.append(f'{key_name}="{updated_keys.pop(key_name)}"\n')
+        else:
+            new_lines.append(line)
+            
+    for key_name, val in updated_keys.items():
+        new_lines.append(f'{key_name}="{val}"\n')
+        
+    try:
+        with open(".env", "w", encoding="utf-8") as f:
+            f.writelines(new_lines)
+    except Exception as e:
+        print(f"Error writing to .env: {e}")
+
+@app.post("/api/config", dependencies=[Depends(verify_password)])
+def update_config(req: UpdateConfigRequest):
+    env_keys = {}
+    if req.openai_api_key is not None:
+        env_keys["OPENAI_API_KEY"] = req.openai_api_key
+        config.OPENAI_API_KEY = req.openai_api_key
+        os.environ["OPENAI_API_KEY"] = req.openai_api_key
+    if req.apify_api_token is not None:
+        env_keys["APIFY_API_TOKEN"] = req.apify_api_token
+        config.APIFY_API_TOKEN = req.apify_api_token
+        os.environ["APIFY_API_TOKEN"] = req.apify_api_token
+    if req.firecrawl_api_key is not None:
+        env_keys["FIRECRAWL_API_KEY"] = req.firecrawl_api_key
+        config.FIRECRAWL_API_KEY = req.firecrawl_api_key
+        os.environ["FIRECRAWL_API_KEY"] = req.firecrawl_api_key
+    if req.resend_api_key is not None:
+        env_keys["RESEND_API_KEY"] = req.resend_api_key
+        config.RESEND_API_KEY = req.resend_api_key
+        os.environ["RESEND_API_KEY"] = req.resend_api_key
+    if req.smtp_host is not None:
+        env_keys["SMTP_HOST"] = req.smtp_host
+        config.SMTP_HOST = req.smtp_host
+        os.environ["SMTP_HOST"] = req.smtp_host
+    if req.smtp_port is not None:
+        env_keys["SMTP_PORT"] = str(req.smtp_port)
+        config.SMTP_PORT = req.smtp_port
+        os.environ["SMTP_PORT"] = str(req.smtp_port)
+    if req.smtp_user is not None:
+        env_keys["SMTP_USER"] = req.smtp_user
+        config.SMTP_USER = req.smtp_user
+        os.environ["SMTP_USER"] = req.smtp_user
+    if req.smtp_password is not None:
+        env_keys["SMTP_PASSWORD"] = req.smtp_password
+        config.SMTP_PASSWORD = req.smtp_password
+        os.environ["SMTP_PASSWORD"] = req.smtp_password
+        
+    save_env_keys(env_keys)
+    return {"status": "saved"}
 
 @app.get("/api/usage", dependencies=[Depends(verify_password)])
 def get_api_usage():

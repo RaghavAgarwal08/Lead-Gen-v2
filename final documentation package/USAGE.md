@@ -94,6 +94,15 @@ SMTP_PASSWORD="abcdefghijklmnop"
 ```
 > Remove any spaces from the App Password.
 
+### Resend API Key (Highly Recommended for Cloud Hosting)
+1. Go to [https://resend.com/](https://resend.com/) and sign up for a free account.
+2. Navigate to **API Keys** and click **Create API Key**.
+3. Copy and paste your key into `.env`:
+```env
+RESEND_API_KEY="re_xxxxxxxxxxxxxxxxxx"
+```
+> **Purpose**: Because cloud hosts like Render block outbound SMTP ports (25, 465, 587) by default, you must configure a Resend key to send email reports from the cloud dashboard via HTTP (port 443).
+
 ### Dashboard Admin Password (Access Control Gate)
 To protect your generated leads database, API credit usage dashboards, and run control consoles, set up an administrative access password:
 1. Open `.env` and add:
